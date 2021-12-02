@@ -14,7 +14,7 @@ package bgu.spl.mics;
  * message-queue (see {@link MessageBus#register(bgu.spl.mics.MicroService)}
  * method). The abstract MicroService stores this callback together with the
  * type of the message is related to.
- * 
+ *
  * Only private fields and methods may be added to this class.
  * <p>
  */
@@ -88,11 +88,12 @@ public abstract class MicroService implements Runnable {
      * @param <T>       The type of the expected result of the request
      *                  {@code e}
      * @param e         The event to send
-     * @return  		{@link Future<T>} object that may be resolved later by a different
-     *         			micro-service processing this event.
-     * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
+     * @return        {@link Future<T>} object that may be resolved later by a different
+     *                   micro-service processing this event.
+     *                      null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
+        //Probably calling sendEvent method inside messageBus which also returns a Future object ******
         //TODO: implement this.
         return null; //TODO: delete this line :)
     }
@@ -124,6 +125,8 @@ public abstract class MicroService implements Runnable {
     /**
      * this method is called once when the event loop starts.
      */
+    //"During initialization each of the above microservices will register itself with the messagebus ******
+    //and will have a queue instantiated for him in the message bus" ******
     protected abstract void initialize();
 
     /**
@@ -162,5 +165,4 @@ public abstract class MicroService implements Runnable {
         //"Registration, Initialization, and Unregistration of the Micro-Service must be executed   ******
         //inside its run method."   ******
     }
-
 }

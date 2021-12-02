@@ -8,6 +8,7 @@ package bgu.spl.mics;
  * it is shared between all the micro-services in the system.
  * You must not alter any of the given methods of this interface. 
  * You cannot add methods to this interface.
+ * // it was written in the FAQ that we can add queries that have no relation to the implementation ****
  */
 public interface MessageBus {
 

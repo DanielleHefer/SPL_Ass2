@@ -7,8 +7,19 @@ package bgu.spl.mics;
  */
 public class MessageBusImpl implements MessageBus {
 
+	private static MessageBusImpl instance = null;
+
+	public static MessageBusImpl getInstance() {
+//		if(instance==null)
+//			instance = new MessageBusImpl();
+//		return instance;
+
+		//NOT THREAD SAFE
+		return null;
+	}
+
 	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) { //Ask whats the "?" means
 		// TODO Auto-generated method stub
 
 	}
@@ -31,7 +42,7 @@ public class MessageBusImpl implements MessageBus {
 
 	}
 
-	
+
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 		// TODO Auto-generated method stub
@@ -48,10 +59,8 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public void unregister(MicroService m) {
 		// TODO Auto-generated method stub
-		// "when a micro service calls the unregister method of the message bus, the message bus should remove itsqueue *******
+		// "when a micro service calls the unregister method of the message bus, the message bus should remove its queue *******
 		// and clean all references related to that micro service" *******
-
-
 	}
 
 	@Override
@@ -63,7 +72,4 @@ public class MessageBusImpl implements MessageBus {
 		//available in the Micro-Service queue, it should wait until a message becomes available." *******
 		return null;
 	}
-
-	
-
 }
