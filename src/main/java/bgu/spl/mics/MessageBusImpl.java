@@ -72,4 +72,28 @@ public class MessageBusImpl implements MessageBus {
 		//available in the Micro-Service queue, it should wait until a message becomes available." *******
 		return null;
 	}
+
+	//WE ADDED *****
+	public boolean isRegistered(MicroService m){
+		// TODO Implement this
+		return true;
+	}
+
+	//WE ADDED *****
+	public <T> boolean isSubscribedToEvent(Class<? extends Event<T>> type, MicroService m){
+		// TODO Implement this
+		return true;
+	}
+
+	//WE ADDED *****
+	public boolean isSubscribedToBroadcast(Class<? extends Broadcast> type, MicroService m){
+		// TODO Implement this
+		return true;
+	}
+
+	//WE ADDED *****
+	public boolean isMessageInQueue(Message m, MicroService ms){
+		// TODO Implement this
+		return true;
+	}
 }

@@ -35,10 +35,16 @@ public class MessageBusImplTest {
 
     @Test
     public void subscribeEvent() {
+        assertFalse(messageBus.isSubscribedToEvent(event.getClass(),ms1));
+        messageBus.subscribeEvent(event.getClass(),ms1);
+        assertTrue(messageBus.isSubscribedToEvent(event.getClass(),ms1));
     }
 
     @Test
     public void subscribeBroadcast() {
+        assertFalse(messageBus.isSubscribedToBroadcast(broad.getClass(),ms1));
+        messageBus.subscribeBroadcast(broad.getClass(),ms1);
+        assertTrue(messageBus.isSubscribedToBroadcast(broad.getClass(),ms1));
     }
 
     @Test
@@ -69,6 +75,7 @@ public class MessageBusImplTest {
     public void sendEvent() {
         //This test also checks the subscribeEvent method
         //maybe need to add before the subscribeEvent method of MicroService ???????
+        assertNull(ms1.sendEvent(event));  //make sure it asserts null because no microservice has subscribed
         messageBus.subscribeEvent(event.getClass(), ms2);
         ms1.sendEvent(event);
         try{
@@ -80,14 +87,43 @@ public class MessageBusImplTest {
 
     @Test
     public void register() {
+        messageBus.unregister(ms1);
+        assertFalse(messageBus.isRegistered(ms1));
+        messageBus.register(ms1);
+        assertTrue(messageBus.isRegistered(ms1));
     }
 
     @Test
     public void unregister() {
+        assertTrue(messageBus.isRegistered(ms1));
+        messageBus.unregister(ms1);
+        assertFalse(messageBus.isRegistered(ms1));
     }
 
     @Test
     public void awaitMessage() {
+        // Check the scenario in which the microservice isn't registered to the message bus
+        messageBus.unregister(ms2);
+        boolean exception = false;
+        try {
+            messageBus.awaitMessage(ms2);
+        }
+        catch (IllegalStateException e){
+            exception=true;
+        } catch (InterruptedException e) {}
+        assertTrue(exception);
+
+        // Check the scenario in which the microservice got the message
+        messageBus.register(ms2);
+        messageBus.subscribeEvent(event.getClass(),ms2);
+        ms1.sendEvent(event);
+        ExampleEvent event2 = null;
+        try {
+            event2 = (ExampleEvent) messageBus.awaitMessage(ms2);
+        }
+        catch (InterruptedException e) {}
+        assertTrue(event.equals(event2));
+        assertFalse(messageBus.isMessageInQueue(event, ms2));
     }
 
     @After
