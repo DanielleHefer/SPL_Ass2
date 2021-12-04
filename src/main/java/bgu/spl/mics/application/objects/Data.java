@@ -15,4 +15,9 @@ public class Data {
     private Type type;
     private int processed;
     private int size;
+
+    public Data (Type type, int size){}
+
+    //Function for testing ******
+    public int getSize(){ return size;}
 }

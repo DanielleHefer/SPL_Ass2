@@ -61,7 +61,6 @@ public class MessageBusImplTest {
     @Test
     public void sendBroadcast() {
         //This test also checks the subscribeBroadcast method
-        //maybe need to add before the subscribeEvent method of MicroService ???????
         messageBus.subscribeBroadcast(broad.getClass(), ms2);
         ms1.sendBroadcast(broad);
         try{
@@ -74,7 +73,6 @@ public class MessageBusImplTest {
     @Test
     public void sendEvent() {
         //This test also checks the subscribeEvent method
-        //maybe need to add before the subscribeEvent method of MicroService ???????
         assertNull(ms1.sendEvent(event));  //make sure it asserts null because no microservice has subscribed
         messageBus.subscribeEvent(event.getClass(), ms2);
         ms1.sendEvent(event);
@@ -104,14 +102,13 @@ public class MessageBusImplTest {
     public void awaitMessage() {
         // Check the scenario in which the microservice isn't registered to the message bus
         messageBus.unregister(ms2);
-        boolean exception = false;
         try {
             messageBus.awaitMessage(ms2);
+            fail("Exception Expected!");
         }
         catch (IllegalStateException e){
-            exception=true;
+            assertTrue(true);
         } catch (InterruptedException e) {}
-        assertTrue(exception);
 
         // Check the scenario in which the microservice got the message
         messageBus.register(ms2);

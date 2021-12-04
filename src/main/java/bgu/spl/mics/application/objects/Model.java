@@ -8,11 +8,31 @@ package bgu.spl.mics.application.objects;
 public class Model {
 
     enum Status {PreTrained, Training, Trained, Tested}
+    enum Result {None, Good, Bad};
 
-    Status modelStatus=Status.PreTrained;
+    private String name;
+    private Data data;
+    private Student student;
+    private Status status=Status.PreTrained;
+    private Result result; //None for a model not in status tested
 
+    //Function for testing ******
+    public void setData(Data data){}
+
+    //Function for testing ******
+    public Data getData() {return data;}
+
+    //Function for testing ******
+    public void setStatus(Status status) {this.status = status;}
+
+    //Function for testing ******
     public Status getStatus() {
-        return modelStatus;
+        return status;
+    }
+
+    //Function for testing ******
+    public Result getResult() {
+        return result;
     }
 
 }

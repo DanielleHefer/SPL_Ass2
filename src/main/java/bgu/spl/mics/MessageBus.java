@@ -13,6 +13,12 @@ package bgu.spl.mics;
 public interface MessageBus {
 
     /**
+     * @INV:
+     *      isSubscribed(event, microService)==true  so:  isRegistered(microService)==true
+     *      sendEvent(event)!=null  iff  isSubscribed(event, microService)==true
+     */
+
+    /**
      * Subscribes {@code m} to receive {@link Event}s of type {@code type}.
      * <p>
      * @param <T>  The type of the result expected by the completed event.
