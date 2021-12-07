@@ -21,8 +21,11 @@ public class Future<T> {
 	/**
 	 * This should be the the only public constructor in this class.
 	 */
+
+	private T result;
+
 	public Future() {
-		//TODO: implement this
+		result=null;
 	}
 	
 	/**
@@ -40,9 +43,14 @@ public class Future<T> {
 	 * 	 	none
 	 * (basic query)
 	 */
-	public T get() {
-		//TODO: implement this.
-		return null;
+	public synchronized T get() {
+		while(result==null) {
+			try{
+				wait();
+			}
+			catch (Exception e){} //wait method can throw 2 types of exceptions, so we will catch a general one
+		}
+		return result;
 	}
 	
 	/**
@@ -55,8 +63,9 @@ public class Future<T> {
 	 * 		isDone()==true
 	 * @param result
 	 */
-	public void resolve (T result) {
-		//TODO: implement this.
+	public synchronized void resolve (T result) { //needs to be synchronized in order to notifyAll
+		this.result=result;
+		notifyAll();
 	}
 	
 	/**
@@ -70,8 +79,7 @@ public class Future<T> {
 	 * (basic query)
 	 */
 	public boolean isDone() {
-		//TODO: implement this.
-		return false;
+		return result!=null;
 	}
 	
 	/**
@@ -92,9 +100,13 @@ public class Future<T> {
 	 * 	 	none
 	 * (basic query)
 	 */
-	public T get(long timeout, TimeUnit unit) {
-		//TODO: implement this.
-		return null;
+	public synchronized T get(long timeout, TimeUnit unit) {
+		if(result==null) {
+			try{
+				wait(unit.toMillis(timeout));
+			}
+			catch (InterruptedException e){}
+		}
+		return result;
 	}
-
 }
