@@ -8,7 +8,7 @@ public class Data {
     /**
      * Enum representing the Data type.
      */
-    enum Type {
+    public enum Type {
         Images, Text, Tabular
     }
 
@@ -25,9 +25,13 @@ public class Data {
         lockProcessed = new Object();
     }
 
-    //Function for testing ******
+    //Function for testing and for our use******
     public int getSize(){
         return size;
+    }
+
+    public Data.Type getType(){
+        return type;
     }
 
     public void increaseProcessed(){

@@ -160,6 +160,7 @@ public abstract class MicroService implements Runnable {
         //Message-Bus and then calls the abstract initialize method. The initialize method   *****
         //allows derived classes to perform any required initialization code *****
         //The registration will occur inside the intialize()
+        messageBus.register(this);
         initialize();
         //"The actual messagae loop:"   ******
         while (!terminated) {

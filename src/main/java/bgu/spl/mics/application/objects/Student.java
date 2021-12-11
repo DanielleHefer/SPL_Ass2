@@ -8,7 +8,7 @@ public class Student {
     /**
      * Enum representing the Degree the student is studying for.
      */
-    enum Degree {
+    public enum Degree {
         MSc, PhD
     }
 
@@ -18,4 +18,7 @@ public class Student {
     private int publications;
     private int papersRead;
 
+    public Degree getStatus(){
+        return status;
+    }
 }
