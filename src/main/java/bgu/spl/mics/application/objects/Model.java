@@ -13,17 +13,37 @@ public class Model {
     private String name;
     private Data data;
     private Student student;
-    private Status status=Status.PreTrained;
+    private Status status;
     private Result result; //None for a model not in status tested
 
-    //Function for testing ******
-    public void setData(Data data){}
+    //For Testing*****
+    public Model(){
+        status=Status.PreTrained;
+        result=Result.None;
+    }
+
+    public Model(String name, Data data, Student student) {
+        this.name=name;
+        this.data=data;
+        this.student=student;
+        status=Status.PreTrained;
+        result=Result.None;
+    }
 
     //Function for testing ******
-    public Data getData() {return data;}
+    public void setData(Data data){
+        this.data=data;
+    }
 
     //Function for testing ******
-    public void setStatus(Status status) {this.status = status;}
+    public Data getData() {
+        return data;
+    }
+
+    //Function for testing and for our use******
+    public void setStatus(Status desiredStatus) {
+        this.status = desiredStatus;
+    }
 
     //Function for testing ******
     public Status getStatus() {
@@ -35,4 +55,15 @@ public class Model {
         return result;
     }
 
+    public void setResult(Result desiredResult){
+        this.result=desiredResult;
+    }
+
+    public String getName(){
+        return this.name;
+    }
+
+    public Student getStudent() {
+        return this.student;
+    }
 }

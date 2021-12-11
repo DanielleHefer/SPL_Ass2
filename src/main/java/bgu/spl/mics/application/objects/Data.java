@@ -13,11 +13,26 @@ public class Data {
     }
 
     private Type type;
+    //The number of samples which the gpu has processed for training, maybe use atomic here????
     private int processed;
     private int size;
+    private Object lockProcessed;
 
-    public Data (Type type, int size){}
+    public Data (Type type, int size){
+        this.type=type;
+        this.size=size;
+        processed=0;
+        lockProcessed = new Object();
+    }
 
     //Function for testing ******
-    public int getSize(){ return size;}
+    public int getSize(){
+        return size;
+    }
+
+    public void increaseProcessed(){
+        synchronized (lockProcessed) {
+            processed++;
+        }
+    }
 }

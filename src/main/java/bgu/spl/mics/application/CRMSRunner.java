@@ -1,6 +1,7 @@
 package bgu.spl.mics.application;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 
 import java.io.Reader;
 import java.nio.file.Files;
@@ -14,6 +15,7 @@ import java.util.Map;
  */
 public class CRMSRunner {
     public static void main(String[] args) {
+
         try{
             // create Gson instance
             Gson gson = new Gson();

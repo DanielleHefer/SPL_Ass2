@@ -77,16 +77,47 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void sendBroadcast(Broadcast b) {
-		// TODO Auto-generated method stub
+		LinkedList<MicroService> list = subscribers.get(b.getClass());
+		if (list != null) {
+			for (MicroService microService : list) {
+				Queue<Message> queue = queues.get(microService);
+				synchronized (queue) {
+					queue.add(b);
+					queue.notifyAll();
+				}
+			}
+		}
 	}
 
+	//WE ADDED*****
+	//The function returns the first microservice in line that can accept the event, and handles the round robin
+	private <T> MicroService findNextMicroservice(Event<T> e){
+		LinkedList<MicroService> list = subscribers.get(e.getClass());
+		if(list!=null) {
+			while (!list.isEmpty()) {
+				synchronized (list) { //making sure list is thread-safe
+					MicroService m = list.remove(); //removing first in queue
+					list.add(m); //adding the microservice to the end of the queue
+					return m; //return the first microservice
+					}
+				}
+			}
+		return null;
+	}
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
-		// TODO Auto-generated method stub
-
-		//Check for current microservice if its queue exist, if no, transfer the message to the next microservice
-
+		MicroService microservice = findNextMicroservice(e);
+		if (microservice!=null) {
+			Future<T> future = new Future<>();
+			futures.put(e,future);
+			synchronized (queues.get(microservice)){
+				queues.get(microservice).add(e);
+				queues.get(microservice).notifyAll();
+			}
+			return future;
+		}
+		//there is no microservice in the queue that can handle the event
 		return null;
 	}
 
@@ -125,35 +156,33 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		// TODO Auto-generated method stub
-
-		// " Once the queue is created, a Micro-Service can take the next message in the queue using the ‘awaitMessage’ *******
-		//method. The ‘awaitMessage’ method is blocking, that is, if there are no messages *******
-		//available in the Micro-Service queue, it should wait until a message becomes available." *******
-		return null;
-	}
+		LinkedList<Message> mQueue = queues.get(m);
+		if (mQueue==null)
+			throw new IllegalArgumentException("microservice is not registered, failed on awaitMessage");
+		synchronized (mQueue){
+			while(mQueue.isEmpty())
+					mQueue.wait();
+			return mQueue.remove();
+		}
+}
 
 	//WE ADDED *****
 	public boolean isRegistered(MicroService m){
-		// TODO Implement this
-		return true;
+		return queues.get(m)!=null;
 	}
 
 	//WE ADDED *****
 	public <T> boolean isSubscribedToEvent(Class<? extends Event<T>> type, MicroService m){
-		// TODO Implement this
-		return true;
+		return subscribers.get(type).contains(m);
 	}
 
 	//WE ADDED *****
 	public boolean isSubscribedToBroadcast(Class<? extends Broadcast> type, MicroService m){
-		// TODO Implement this
-		return true;
+		return subscribers.get(type).contains(m);
 	}
 
 	//WE ADDED *****
 	public boolean isMessageInQueue(Message m, MicroService ms){
-		// TODO Implement this
-		return true;
+		return queues.get(ms).contains(m);
 	}
 }
