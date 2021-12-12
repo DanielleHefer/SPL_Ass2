@@ -39,4 +39,16 @@ public class Data {
             processed++;
         }
     }
+
+    public int typeToNum() {
+        switch (this.type) {
+            case Tabular:
+                return 1;
+            case Text:
+                return 2;
+            case Images:
+                return 4;
+        }
+        return 0;
+    }
 }

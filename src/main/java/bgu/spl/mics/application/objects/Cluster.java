@@ -1,6 +1,10 @@
 package bgu.spl.mics.application.objects;
 
 
+import bgu.spl.mics.MessageBusImpl;
+
+import java.util.Hashtable;
+
 /**
  * Passive object representing the cluster.
  * <p>
@@ -14,9 +18,17 @@ public class Cluster {
 	/**
      * Retrieves the single instance of this class.
      */
+	private static class ClusterInstance{
+		private static Cluster instance = new Cluster();
+	}
+
 	public static Cluster getInstance() {
-		//TODO: Implement this
-		return null;
+		return ClusterInstance.instance;
+	}
+
+	//Implement constructor *******************
+	private Cluster () {
+
 	}
 
 }
