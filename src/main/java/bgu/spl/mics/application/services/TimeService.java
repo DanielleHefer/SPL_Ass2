@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.TickBroadcast;
 
 /**
  * TimeService is the global system timer There is only one instance of this micro-service.
@@ -23,5 +24,5 @@ public class TimeService extends MicroService{
 		// TODO Implement this
 		
 	}
-
+//IMPLEMENT tick.getCurrTick() AND THAN UN-BACKSLASH IN GPUSERVICE
 }

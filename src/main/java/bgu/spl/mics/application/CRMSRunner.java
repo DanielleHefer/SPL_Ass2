@@ -96,5 +96,8 @@
 //        catch (Exception e){
 //
 //        }
+
+//        //MAKE SURE ALL THREAD ARE FINISHED*************
+//        //GENERATE RESULTS FILE
 //    }
 //}

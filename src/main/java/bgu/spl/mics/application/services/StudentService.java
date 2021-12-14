@@ -1,9 +1,11 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.*;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 
 import javax.jws.WebParam;
 import java.util.LinkedList;
@@ -20,20 +22,28 @@ import java.util.Vector;
  */
 public class StudentService extends MicroService {
 
-    Student student;
-    LinkedList<TrainModelEvent> trainModelEvents;
+    private Student student;
+    private LinkedList<TrainModelEvent> trainModelEvents;
+    private LinkedList<Future<Model>> futures;
 
     //In the main file, after creating a student, call setStudentModels(Vector models) and then create a student service.
     //Set in main file: StudentService(student.getName(), student) so we will call the constructor with that
     public StudentService(String name, Student student) {
         super(name);
         this.student = student;
+        futures = new LinkedList<>();
         createTrainModelEvents(student.getStudentModels());
     }
 
     public void createTrainModelEvents(Vector<Model> models) {
         for (Model m : models) {
             trainModelEvents.add(new TrainModelEvent(m));
+        }
+    }
+
+    public void sendTrainModelEvents() {
+        for (TrainModelEvent e : trainModelEvents) {
+            futures.add(super.sendEvent(e));
         }
     }
 
@@ -46,19 +56,34 @@ public class StudentService extends MicroService {
             if(tick==null) {
                 terminate();
             }
-            //CHECKING FUTURES:
-            // check each tick if there is a future available - maybe with executors *********
-            // if self management - for loop in which we will check for each future if it's done,
-            // and if it does act according to its status (send test/publish event)
-            //SORTING IN MESSAGEBUS & SENDING ORDER BETWEEN STUDENTS:
-            //think of options - currently the models in each student are sorted, but if all the
-            //students will send all the models at once we lost the advantage of the sorting.
-            //maybe sending from the students in round-rubin manner, maybe sort in messagebus.....
+
+            for (Future<Model> future : futures) {
+                if(future.isDone()) {
+                    Model model = future.get();
+                    if(model.getStatus()== Model.Status.Trained) {
+                        Future<Model> modelFuture = super.sendEvent(new TestModelEvent<>(model));
+                        futures.add(modelFuture);
+                    }
+                    else if (model.getStatus()== Model.Status.Tested) {
+                        super.sendEvent(new PublishResultsEvent<>(model));
+                    }
+                    futures.remove(future);
+                }
+            }
         });
 
         super.subscribeBroadcast(PublishConferenceBroadcast.class, conference -> {
             student.readPublishes(conference.getModelsNames());
         });
 
+
+        //SORTING IN MESSAGEBUS & SENDING ORDER BETWEEN STUDENTS:
+        //think of options - currently the models in each student are sorted, but if all the
+        //students will send all the models at once we lost the advantage of the sorting.
+        //maybe sending from the students in round-rubin manner, maybe sort in messagebus.....
+
+        //We will probably change its location and implementation *************
+        //so we organize the order of sending events between students efficiently ***********
+        sendTrainModelEvents();
     }
 }

@@ -1,11 +1,11 @@
 package bgu.spl.mics.application.objects;
 
+import bgu.spl.mics.Future;
+
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Vector;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * Passive object representing single student.
@@ -27,6 +27,7 @@ public class Student {
 
     private Vector<Model> studentModels;
     private HashSet<String> modelsNames;
+
 
     public Student (String name, String department, Degree status) {
         this.name=name;

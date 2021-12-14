@@ -1,6 +1,8 @@
 package bgu.spl.mics.application.objects;
 
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.concurrent.BlockingQueue;
 
 
 /**
@@ -24,13 +26,16 @@ public class CPU {
     private int cores;
     //we trust the cluster to push new DataBatches into this collection,
     // there is no function to check a queue in cluster!! this is the cpu queue! (gpu will have a queue in cluster)
-    private Collection<DataBatch> data;
+    private Collection<DataBatch> data; //For Testing *****
     private Cluster cluster;
 
-    private int currTick;
-    private int startTick; //will be the start tick of processing this batch
-    private DataBatch currDataBatch; //will be null if no dataBatch is processed right now
-    private int dataTypeNeededTicks;
+    private int currTick; //For Testing*****
+    private int startTick; //will be the start tick of processing this batch  //For Testing*****
+    private DataBatch currDataBatch; //will be null if no dataBatch is processed right now  //For Testing*****
+    private int dataTypeNeededTicks;  //For Testing*****
+
+    private BlockingQueue<DataBatch> innerQueue;
+    private double loadFactor;
 
     public CPU (int cores) {
         this.cores=cores;
@@ -90,6 +95,18 @@ public class CPU {
      */
     public int getDataTypeNeededTicks() {return dataTypeNeededTicks;}
 
+    public BlockingQueue<DataBatch> getInnerQueue(){
+        return innerQueue;
+    }
+
+    public void pushToInnerQueue(DataBatch db) {
+        innerQueue.offer(db);
+    }
+
+    public void takeNextBatchFromInnerQueue() {
+        currDataBatch = innerQueue.poll();
+    }
+
     /**
      * @PRE:
      *      none
@@ -99,6 +116,14 @@ public class CPU {
     //Function for testing ****
     public void addDataBatchToCollection (DataBatch batch){
         //TODO - implement so the tests will work
+    }
+
+    public double getLoadFactor() {
+        return loadFactor;
+    }
+
+    public void updateLoadFactor(double lf) {
+        loadFactor+=lf;
     }
 
     /**

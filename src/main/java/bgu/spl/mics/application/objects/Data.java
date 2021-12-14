@@ -35,9 +35,7 @@ public class Data {
     }
 
     public void increaseProcessed(){
-        synchronized (lockProcessed) {
             processed++;
-        }
     }
 
     public int typeToNum() {
