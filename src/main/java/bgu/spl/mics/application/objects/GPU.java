@@ -7,6 +7,7 @@ import bgu.spl.mics.application.messages.TrainModelEvent;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Passive object representing a single GPU.
@@ -45,7 +46,9 @@ public class GPU {
 
     private DataBatch currDataBatch; //The data batch the gpu is currently processing
     private TrainModelEvent currTrainEvent;
-    private LinkedList<DataBatch> VRAM;
+
+    //Maybe not synchronized*********
+    private LinkedBlockingQueue<DataBatch> VRAM;
 
     //Probably be changed - maybe a queue for train and queue for test*********
     private LinkedList<TestModelEvent> innerTestQueue;
@@ -71,7 +74,7 @@ public class GPU {
         model = null;
         currDataBatch = null;
         currTrainEvent = null;
-        VRAM = new LinkedList<>();
+        VRAM = new LinkedBlockingQueue<>();
 
         switch (type) {
             case RTX3090: {
@@ -220,8 +223,12 @@ public class GPU {
         currDataBatch=db;
     }
 
-    public LinkedList<DataBatch> getVRAM() {
+    public LinkedBlockingQueue<DataBatch> getVRAM() {
         return VRAM;
+    }
+
+    public void setCurrTick (Integer tick) {
+        this.currTick=tick;
     }
 
     public void pollFromVRAM() {
@@ -235,6 +242,7 @@ public class GPU {
 
     public void pushToVRAM(DataBatch db) {
         VRAM.offer(db);
+        currVRAMSize++;
     }
 
     public TrainModelEvent getCurrTrainEvent() {

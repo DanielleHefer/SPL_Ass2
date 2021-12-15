@@ -2,23 +2,54 @@ package bgu.spl.mics.application.services;
 
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.objects.CPU;
 
 /**
- * CPU service is responsible for handling the {@link DataPreProcessEvent}.
+ * CPU service is responsible for handling the {@link}.
  * This class may not hold references for objects which it is not responsible for.
  *
  * You can add private fields and public methods to this class.
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class CPUService extends MicroService {
-    public CPUService(String name) {
-        super("Change_This_Name");
-        // TODO Implement this
+
+    private CPU cpu;
+
+    public CPUService(String name, CPU cpu) {
+        super(name);
+        this.cpu=cpu;
     }
 
     @Override
     protected void initialize() {
-        // TODO Implement this
+        super.subscribeBroadcast(TickBroadcast.class, tick ->{
+
+            if (tick.getCurrTick() == null) {
+                terminate();
+            }
+
+            else{
+                cpu.setCurrTick(tick.getCurrTick());
+                //CPU is not currently working on a batch
+                if (cpu.getCurrDataBatch()==null) {
+                    if(!cpu.getInnerQueue().isEmpty()) {
+                        cpu.takeBatchFromQueue();
+                    }
+                }
+
+                //CPU is currently processing a batch
+                else {
+                    //CPU is done processing the curr DataBatch
+                    if (cpu.getCurrTick()-cpu.getStartTick()>cpu.getProcessTick()){
+                        cpu.completeBatch();
+                        if(!cpu.getInnerQueue().isEmpty()) {
+                            cpu.takeBatchFromQueue();
+                        }
+                    }
+                }
+            }
+        });
 
     }
 }

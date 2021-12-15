@@ -3,6 +3,7 @@ package bgu.spl.mics.application.objects;
 
 import bgu.spl.mics.MessageBusImpl;
 
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -17,14 +18,15 @@ import java.util.concurrent.BlockingQueue;
  */
 public class Cluster {
 
-	private Hashtable <GPU, BlockingQueue<DataBatch>> GPUs;
+	private HashSet<GPU> GPUs;
 	private PriorityQueue<CPU> CPUs;
 	private LinkedList<String> trainedModelsNames;
-	private int totalDBProcessedCPU;
+	private Integer totalDBProcessedCPU;
 	private int CPUTimeUnits;
 	private int GPUTimeUnits;
 	private Object lockGPUTimeUnits;
 	private Object lockCPUTimeUnits;
+
 
     /**
      * Retrieves the single instance of this class.
@@ -38,7 +40,7 @@ public class Cluster {
 	}
 
 	private Cluster () {
-		GPUs = new Hashtable<>();
+		GPUs = new HashSet<>();
 		CPUs = new PriorityQueue<>((a,b) -> Double.compare(a.getLoadFactor(),b.getLoadFactor()));
 		trainedModelsNames = new LinkedList<>();
 		totalDBProcessedCPU=0;
@@ -62,8 +64,30 @@ public class Cluster {
 		}
 	}
 
+	public void increaseCPUTimeUnits(int ticks) {
+		synchronized (lockCPUTimeUnits) {
+			CPUTimeUnits += ticks;
+		}
+	}
+
 	public void addModelName(String name) {
 		//WE DECIDED NOT TO USE SYNCHRONIZED HERE *********
 		trainedModelsNames.add(name);
+	}
+
+	public void increaseTotalDBProcessedCPU() {
+		synchronized (totalDBProcessedCPU) {
+			totalDBProcessedCPU++;
+		}
+	}
+
+	public void addBatchToVRAM(DataBatch db) {
+		db.getGpuSender().pushToVRAM(db);
+	}
+
+	public void setLoadFactor(CPU cpu, int processTick) {
+		CPUs.remove(cpu);
+		cpu.updateLoadFactor(-processTick);
+		CPUs.offer(cpu);
 	}
 }

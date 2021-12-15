@@ -3,6 +3,8 @@ package bgu.spl.mics.application.services;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.TickBroadcast;
 
+import java.util.Timer;
+
 /**
  * TimeService is the global system timer There is only one instance of this micro-service.
  * It keeps track of the amount of ticks passed since initialization and notifies
@@ -14,15 +16,30 @@ import bgu.spl.mics.application.messages.TickBroadcast;
  */
 public class TimeService extends MicroService{
 
-	public TimeService() {
-		super("Change_This_Name");
-		// TODO Implement this
+	private int msForTick;
+	private int duration;
+
+	public TimeService(String name, int msForTick, int duration) {
+		super(name);
+		this.msForTick=msForTick;
+		this.duration=duration;
 	}
 
 	@Override
 	protected void initialize() {
-		// TODO Implement this
-		
+		TickBroadcast tickBroadcast = new TickBroadcast(0);
+		for(int tick=1; tick < duration; tick++) {
+			tickBroadcast.increaseTick();
+			sendBroadcast(tickBroadcast);
+			try{
+				Thread.sleep(msForTick);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		sendBroadcast(new TickBroadcast(null));
+		terminate();
 	}
-//IMPLEMENT tick.getCurrTick() AND THAN UN-BACKSLASH IN GPUSERVICE
+//IMPLEMENT tick.getCurrTick() AND THAN UN-BACKSLASH IN GPUSERVICE + CPUSERVICE
 }

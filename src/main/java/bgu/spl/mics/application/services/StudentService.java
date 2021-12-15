@@ -24,14 +24,17 @@ public class StudentService extends MicroService {
 
     private Student student;
     private LinkedList<TrainModelEvent> trainModelEvents;
-    private LinkedList<Future<Model>> futures;
+
+    private Future<Model> future;
+    private boolean firstWasSent;
 
     //In the main file, after creating a student, call setStudentModels(Vector models) and then create a student service.
     //Set in main file: StudentService(student.getName(), student) so we will call the constructor with that
     public StudentService(String name, Student student) {
         super(name);
         this.student = student;
-        futures = new LinkedList<>();
+        future = null;
+        firstWasSent=false;
         createTrainModelEvents(student.getStudentModels());
     }
 
@@ -42,32 +45,34 @@ public class StudentService extends MicroService {
     }
 
     public void sendTrainModelEvents() {
-        for (TrainModelEvent e : trainModelEvents) {
-            futures.add(super.sendEvent(e));
+        if(!trainModelEvents.isEmpty()) {
+            TrainModelEvent e = trainModelEvents.pollFirst();
+            future = super.sendEvent(e);
         }
     }
 
     @Override
     protected void initialize() {
 
-        //update this function after implementing time service -  *********************
-        //we think that the only use of ticks in student will be for termination ************
         super.subscribeBroadcast(TickBroadcast.class, tick-> {
-            if(tick==null) {
+            if(tick.getCurrTick()==null) {
                 terminate();
             }
+            else {
+                if(!firstWasSent) {
+                    sendTrainModelEvents();
+                    firstWasSent=true;
+                }
 
-            for (Future<Model> future : futures) {
-                if(future.isDone()) {
+                else if (future!=null && future.isDone()) {
                     Model model = future.get();
-                    if(model.getStatus()== Model.Status.Trained) {
-                        Future<Model> modelFuture = super.sendEvent(new TestModelEvent<>(model));
-                        futures.add(modelFuture);
-                    }
-                    else if (model.getStatus()== Model.Status.Tested) {
+                    if (model.getStatus() == Model.Status.Trained) {
+                        future = super.sendEvent(new TestModelEvent<>(model));
+                    } else if (model.getStatus() == Model.Status.Tested) {
                         super.sendEvent(new PublishResultsEvent<>(model));
+                        future = null;
+                        sendTrainModelEvents();
                     }
-                    futures.remove(future);
                 }
             }
         });
@@ -75,15 +80,5 @@ public class StudentService extends MicroService {
         super.subscribeBroadcast(PublishConferenceBroadcast.class, conference -> {
             student.readPublishes(conference.getModelsNames());
         });
-
-
-        //SORTING IN MESSAGEBUS & SENDING ORDER BETWEEN STUDENTS:
-        //think of options - currently the models in each student are sorted, but if all the
-        //students will send all the models at once we lost the advantage of the sorting.
-        //maybe sending from the students in round-rubin manner, maybe sort in messagebus.....
-
-        //We will probably change its location and implementation *************
-        //so we organize the order of sending events between students efficiently ***********
-        sendTrainModelEvents();
     }
 }

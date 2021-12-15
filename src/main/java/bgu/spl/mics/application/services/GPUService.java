@@ -31,13 +31,12 @@ public class GPUService extends MicroService {
     protected void initialize() {
         super.subscribeBroadcast(TickBroadcast.class, tick ->{
 
-            //tick.getCurrTick()==null          FIX AFTER IMPLEMENTATION TICKBROADCAST*******
-            if (tick == null) {
+            if (tick.getCurrTick() == null) {
                 terminate();
             }
 
             else {
-//                gpu.setCurrTick(tick.getCurrTick());                  UN-BACKSLASH WHEN IMPLEMENTING
+                gpu.setCurrTick(tick.getCurrTick());
                 if(gpu.isGPUAvailable()) {
                     while (!gpu.getInnerTestQueue().isEmpty()) {
                         TestModelEvent testEvent = gpu.getInnerTestQueue().poll();
@@ -69,8 +68,12 @@ public class GPUService extends MicroService {
                             gpu.pollFromVRAM();
                         }
 
+                        //If gpu.getVRAM().size()==0 there are 2 options:
+                        // 1. The CPU processing our batches (do nothing)
+                        // 2. We finished:
+
                         //Check if the GPU is done processing all the data batches
-                        if (gpu.getBatchesAmountToProcess()==0) {
+                        else if (gpu.getBatchesAmountToProcess()==0) {
                             gpu.completeModel();
                             super.complete(gpu.getCurrTrainEvent(), gpu.getModel());
                             gpu.setModel(null);

@@ -38,11 +38,18 @@ public class ConferenceService extends MicroService {
 
         //Subscribe to tickBroadcast
         super.subscribeBroadcast(TickBroadcast.class, tick->{
-            currTick++;
-            if(currTick==conferenceDate) {
-                Vector<String> modelNames = conference.getModelsNames();
-                sendBroadcast(new PublishConferenceBroadcast(modelNames));
+
+            if(tick.getCurrTick()==null) {
                 terminate();
+            }
+
+            else {
+                currTick=tick.getCurrTick();
+                if (currTick == conferenceDate) {
+                    Vector<String> modelNames = conference.getModelsNames();
+                    sendBroadcast(new PublishConferenceBroadcast(modelNames));
+                    terminate();
+                }
             }
         });
     }

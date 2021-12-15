@@ -13,15 +13,18 @@ public class DataBatch {
     private Data.Type type;
     private GPU gpuSender;
 
+    private int ticksForType;
     private boolean isProcessedByCPU;
     private int timeToProcessByCPU; //will be initialized when processed
 
     public DataBatch (Data data, int startIndex, GPU gpuSender) {
         this.data=data;
+        this.type=this.data.getType();
         this.startIndex=startIndex;
         this.gpuSender=gpuSender;
         isProcessedByCPU=false;
         timeToProcessByCPU=0;
+        this.ticksForType = data.typeToNum();
     }
 
     //For Testing****
@@ -46,6 +49,10 @@ public class DataBatch {
         return gpuSender;
     }
 
+    public int getTicksForType() {
+        return ticksForType;
+    }
+
     public boolean isProcessedByCPU() {
         return isProcessedByCPU;
     }
@@ -54,7 +61,7 @@ public class DataBatch {
         return timeToProcessByCPU;
     }
 
-    public void doneProcessedByCPU() {
+    public void setProcessedByCPU() {
         isProcessedByCPU = true;
     }
 
