@@ -30,7 +30,7 @@ public class GPU {
     /**
      * Enum representing the type of the GPU.
      */
-    enum Type {RTX3090, RTX2080, GTX1080}
+    public enum Type {RTX3090, RTX2080, GTX1080}
 
     private Type type;
     private Model model; // The model the gpu currently working on (null for none) *****
