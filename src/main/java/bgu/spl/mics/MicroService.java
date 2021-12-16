@@ -22,7 +22,7 @@ import java.util.Hashtable;
  */
 public abstract class MicroService implements Runnable {
 
-    private boolean terminated = false;
+    private boolean terminated;
     private final String name;
     private MessageBusImpl messageBus;
     private Hashtable<Class<? extends Message>, Callback> callbacks;
@@ -34,6 +34,8 @@ public abstract class MicroService implements Runnable {
     public MicroService(String name) {
         this.name = name;
         messageBus = MessageBusImpl.getInstance();
+        callbacks = new Hashtable<>();
+        terminated=false;
     }
 
     /**

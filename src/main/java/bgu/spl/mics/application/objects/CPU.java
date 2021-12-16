@@ -36,7 +36,7 @@ public class CPU {
 
     private int processTick;
     private LinkedBlockingQueue<DataBatch> innerQueue;
-    private int loadFactor;
+    private Integer loadFactor;
 
     public CPU (int cores) {
         this.cores=cores;
@@ -115,7 +115,7 @@ public class CPU {
 
     public void pushToInnerQueue(DataBatch db) {
         innerQueue.offer(db);
-        loadFactor+=(32/cores)*db.getTicksForType();
+        updateLoadFactor((32/cores)*db.getTicksForType());
     }
 
     public void takeNextBatchFromInnerQueue() {
@@ -134,11 +134,15 @@ public class CPU {
     }
 
     public int getLoadFactor() {
-        return loadFactor;
+        synchronized (loadFactor) {
+            return loadFactor;
+        }
     }
 
     public void updateLoadFactor(int lf) {
-        loadFactor+=lf;
+        synchronized (loadFactor) {
+            loadFactor += lf;
+        }
     }
 
     public void setCurrTick (Integer tick) {
@@ -232,7 +236,7 @@ public class CPU {
         currDataBatch.setProcessedByCPU();
         currDataBatch.setTimeToProcessByCPU(processTick);
         cluster.addBatchToVRAM(currDataBatch);
-        cluster.setLoadFactor(this,processTick);
+        updateLoadFactor(-processTick);
         resetAfterBatch();
     }
 

@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Passive object representing the cluster.
@@ -19,7 +20,7 @@ import java.util.concurrent.BlockingQueue;
 public class Cluster {
 
 	private HashSet<GPU> GPUs;
-	private PriorityQueue<CPU> CPUs;
+	private LinkedList<CPU> CPUs;
 	private LinkedList<String> trainedModelsNames;
 	private Integer totalDBProcessedCPU;
 	private int CPUTimeUnits;
@@ -41,7 +42,7 @@ public class Cluster {
 
 	private Cluster () {
 		GPUs = new HashSet<>();
-		CPUs = new PriorityQueue<>((a,b) -> Double.compare(a.getLoadFactor(),b.getLoadFactor()));
+		CPUs = new LinkedList<>();
 		trainedModelsNames = new LinkedList<>();
 		totalDBProcessedCPU=0;
 		CPUTimeUnits=0;
@@ -52,10 +53,19 @@ public class Cluster {
 
 
 	public void sendUnprocessedBatch(DataBatch db) {
-		//Remove the CPU with the minimal load factor, and then add it with the new db
-		CPU currCPU = CPUs.poll();
-		currCPU.pushToInnerQueue(db);
-		CPUs.offer(currCPU);
+		//We synchronized the whole list - might be changed *************************
+		synchronized (CPUs) {
+			int minLF = Integer.MAX_VALUE;
+			CPU minCPU = null;
+			for (CPU cpu : CPUs) {
+				int currLF = cpu.getLoadFactor()+(32/cpu.getCores())*db.getTicksForType();
+				if(currLF<minLF){
+					minLF = currLF;
+					minCPU = cpu;
+				}
+			}
+			minCPU.pushToInnerQueue(db);
+		}
 	}
 
 	public void increaseGPUTimeUnits(int ticks) {
@@ -68,6 +78,18 @@ public class Cluster {
 		synchronized (lockCPUTimeUnits) {
 			CPUTimeUnits += ticks;
 		}
+	}
+
+	public int getCPUTimeUnits() {
+		return CPUTimeUnits;
+	}
+
+	public int getTotalDBProcessed() {
+		return totalDBProcessedCPU;
+	}
+
+	public int getGPUTimeUnits() {
+		return GPUTimeUnits;
 	}
 
 	public void addModelName(String name) {
@@ -83,11 +105,5 @@ public class Cluster {
 
 	public void addBatchToVRAM(DataBatch db) {
 		db.getGpuSender().pushToVRAM(db);
-	}
-
-	public void setLoadFactor(CPU cpu, int processTick) {
-		CPUs.remove(cpu);
-		cpu.updateLoadFactor(-processTick);
-		CPUs.offer(cpu);
 	}
 }

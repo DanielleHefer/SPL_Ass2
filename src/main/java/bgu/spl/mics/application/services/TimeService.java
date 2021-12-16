@@ -31,6 +31,7 @@ public class TimeService extends MicroService{
 		for(int tick=1; tick < duration; tick++) {
 			tickBroadcast.increaseTick();
 			sendBroadcast(tickBroadcast);
+			System.out.println("Tick Broadcast - "+tick); //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			try{
 				Thread.sleep(msForTick);
 			} catch (InterruptedException e) {

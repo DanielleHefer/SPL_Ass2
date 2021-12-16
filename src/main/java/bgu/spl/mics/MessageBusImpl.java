@@ -32,8 +32,8 @@ public class MessageBusImpl implements MessageBus {
 		return MessageBusInstance.instance;
 	}
 
-	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) { //Ask whats the "?" means
+	public void subscribeMessage(Class<? extends Message> type, MicroService m) {
+		System.out.println("Thread "+Thread.currentThread()+" "+Thread.currentThread().getName()+" - subscribeMessage");    //%%%%%%%%%%%%%%%%%%%%%
 		//In order that other threads that want to create the same event type to the map
 		//Or in order that other threads that want to send event with the same event type
 		synchronized (subscribers) {
@@ -43,31 +43,20 @@ public class MessageBusImpl implements MessageBus {
 				eventSubscribers.add(m);
 				return;
 			}
-			LinkedList<MicroService> ll = new LinkedList<MicroService>();
+			LinkedList<MicroService> ll = new LinkedList<>();
 			ll.add(m);
 			subscribers.put(type, ll);
 		}
-		//Wake the other threads that want to send event and waiting
-		notifyAll();
+	}
+
+	@Override
+	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+		subscribeMessage(type, m);
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		//In order that other threads that want to create the same event type to the map
-		//Or in order that other threads that want to send event with the same event type
-		synchronized (subscribers) {
-			LinkedList<MicroService> eventSubscribers = subscribers.get(type);
-			if(eventSubscribers!=null) {
-				//maybe need to synchronize eventSubscribers ?????
-				eventSubscribers.add(m);
-				return;
-			}
-			LinkedList<MicroService> ll = new LinkedList<MicroService>();
-			ll.add(m);
-			subscribers.put(type, ll);
-		}
-		//Wake the other threads that want to send event and waiting
-		notifyAll();
+		subscribeMessage(type, m);
 	}
 
 	@Override
@@ -77,13 +66,14 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void sendBroadcast(Broadcast b) {
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - sendBroadcast");    //%%%%%%%%%%%%%%%%%%%%%
 		LinkedList<MicroService> list = subscribers.get(b.getClass());
 		if (list != null) {
 			for (MicroService microService : list) {
-				Queue<Message> queue = queues.get(microService);
-				synchronized (queue) {
-					queue.add(b);
-					queue.notifyAll();
+				//Queue<Message> queue = queues.get(microService);
+				synchronized (queues.get(microService)) {
+					queues.get(microService).add(b);
+					queues.get(microService).notifyAll();
 				}
 			}
 		}
@@ -92,6 +82,8 @@ public class MessageBusImpl implements MessageBus {
 	//WE ADDED*****
 	//The function returns the first microservice in line that can accept the event, and handles the round robin
 	private <T> MicroService findNextMicroservice(Event<T> e){
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - findNextMicroservice");    //%%%%%%%%%%%%%%%%%%%%%
+
 		LinkedList<MicroService> list = subscribers.get(e.getClass());
 		if(list!=null) {
 			while (!list.isEmpty()) {
@@ -107,6 +99,8 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - sendEvent");    //%%%%%%%%%%%%%%%%%%%%%
+
 		MicroService microservice = findNextMicroservice(e);
 		if (microservice!=null) {
 			Future<T> future = new Future<>();
@@ -123,16 +117,18 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void register(MicroService m) {
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - register");    //%%%%%%%%%%%%%%%%%%%%%
+
 		// "it creates a queue for each micro service using the register method" *******
 		synchronized (queues) {
-			if(queues.get(m)==null) {
-				queues.put(m, new LinkedList<Message>());
-			}
+				queues.put(m, new LinkedList<>());
 		}
 	}
 
 	@Override
 	public void unregister(MicroService m) {
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - unregister");    //%%%%%%%%%%%%%%%%%%%%%
+
 		// TODO Auto-generated method stub
 		// "when a micro service calls the unregister method of the message bus, the message bus should remove its queue *******
 		// and clean all references related to that micro service" *******
@@ -141,35 +137,48 @@ public class MessageBusImpl implements MessageBus {
 		//So there is no reason to transfer events to other registered microservices
 
 		//Delete the queue
-		synchronized (queues) {
+		synchronized (queues) {   // maybe specific queue **************88
 			if(queues.get(m)!=null) {
 				queues.remove(m);
 			}
 		}
 
 		//Delete the microservice from the events he subscribed to
-		subscribers.forEach((event,list) -> {
-			if(list.contains(m))
-				list.remove();
-		});
+		synchronized (subscribers) {
+			subscribers.forEach((event, list) -> {
+				if (list.contains(m))
+					list.remove();
+			});
+		}
 	}
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - awaitMessage");    //%%%%%%%%%%%%%%%%%%%%%
+
 		LinkedList<Message> mQueue = queues.get(m);
 		if (mQueue==null)
 			throw new IllegalArgumentException("microservice is not registered, failed on awaitMessage");
 		synchronized (mQueue){
-			while(mQueue.isEmpty())
+			while(mQueue.isEmpty()) {
+				try{
 					mQueue.wait();
+				}
+				catch(Exception e) {}
+			}
 			return mQueue.remove();
 		}
 }
 
 	//WE ADDED *****
 	public boolean isRegistered(MicroService m){
-		return queues.get(m)!=null;
+		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - isRegistered");    //%%%%%%%%%%%%%%%%%%%%%
+
+		synchronized (queues) {
+			return queues.get(m) != null;
+		}
 	}
+
 
 	//WE ADDED *****
 	public <T> boolean isSubscribedToEvent(Class<? extends Event<T>> type, MicroService m){
