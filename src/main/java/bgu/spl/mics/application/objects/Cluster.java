@@ -20,7 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Cluster {
 
 	private HashSet<GPU> GPUs;
-	private LinkedList<CPU> CPUs;
+	private LinkedBlockingQueue<CPU> CPUs;
 	private LinkedList<String> trainedModelsNames;
 	private Integer totalDBProcessedCPU;
 	private int CPUTimeUnits;
@@ -42,7 +42,7 @@ public class Cluster {
 
 	private Cluster () {
 		GPUs = new HashSet<>();
-		CPUs = new LinkedList<>();
+		CPUs = new LinkedBlockingQueue<>();
 		trainedModelsNames = new LinkedList<>();
 		totalDBProcessedCPU=0;
 		CPUTimeUnits=0;
@@ -64,8 +64,6 @@ public class Cluster {
 	}
 
 	public void sendUnprocessedBatch(DataBatch db) {
-		//We synchronized the whole list - might be changed *************************
-		synchronized (CPUs) {
 			int minLF = Integer.MAX_VALUE;
 			CPU minCPU = null;
 			for (CPU cpu : CPUs) {
@@ -74,7 +72,6 @@ public class Cluster {
 					minLF = currLF;
 					minCPU = cpu;
 				}
-			}
 			minCPU.pushToInnerQueue(db);
 		}
 	}

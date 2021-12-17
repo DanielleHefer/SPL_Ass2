@@ -231,8 +231,8 @@ public class GPU {
         this.currTick=tick;
     }
 
-    public void pollFromVRAM() {
-        currDataBatch =  VRAM.poll();
+    public void pollFromVRAM() throws InterruptedException {
+        currDataBatch =  VRAM.take();
         startTick=currTick;
         currVRAMSize--;
         if(!dataBatches.isEmpty()) {
@@ -354,18 +354,25 @@ public class GPU {
         if(model.getStudent().getStatus()==Student.Degree.MSc) {
             if(grade<0.6) {
                 model.setResult(Model.Result.Good);
+                model.setStatus(Model.Status.Tested);
             }
-            else
+            else {
                 model.setResult(Model.Result.Bad);
+                model.setStatus(Model.Status.Tested);
+            }
         }
         //PHD student
         else {
             if(grade<0.8) {
                 model.setResult(Model.Result.Good);
+                model.setStatus(Model.Status.Tested);
             }
-            else
+            else {
                 model.setResult(Model.Result.Bad);
+                model.setStatus(Model.Status.Tested);
+            }
         }
+
     }
 
     /**

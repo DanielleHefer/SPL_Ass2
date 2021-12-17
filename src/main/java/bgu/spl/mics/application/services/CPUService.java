@@ -35,6 +35,10 @@ public class CPUService extends MicroService {
                 //CPU is not currently working on a batch
                 if (cpu.getCurrDataBatch()==null) {
                     if(!cpu.getInnerQueue().isEmpty()) {
+
+                        //%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        System.out.println("CPU take batch from queue "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+
                         cpu.takeBatchFromQueue();
                     }
                 }
@@ -44,8 +48,15 @@ public class CPUService extends MicroService {
                     //CPU is done processing the curr DataBatch
                     if (cpu.getCurrTick()-cpu.getStartTick()>cpu.getProcessTick()){
                         cpu.completeBatch();
+
+                        //%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        System.out.println("CPU complete batch "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+
                         if(!cpu.getInnerQueue().isEmpty()) {
                             cpu.takeBatchFromQueue();
+
+                            //%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            System.out.println("CPU take batch from queue "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
                         }
                     }
                 }

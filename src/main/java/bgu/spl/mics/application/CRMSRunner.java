@@ -1,5 +1,7 @@
 package bgu.spl.mics.application;
 
+import bgu.spl.mics.MessageBusImpl;
+import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.objects.*;
 import bgu.spl.mics.application.services.*;
 import com.google.gson.*;
@@ -65,6 +67,20 @@ public class CRMSRunner {
     }
 
     public static void main(String[] args) {
+
+//        ConfrenceInformation con = new ConfrenceInformation("nnnna",10);
+//        ConferenceService cs = new ConferenceService("dsfsd", con);
+//        MessageBusImpl mb= MessageBusImpl.getInstance();
+//        mb.register(cs);
+//        Vector <String> vec = new Vector<>();
+//        vec.add("a");
+//        vec.add("b");
+//        Student student1 = new Student("asd", "dsf", Student.Degree.MSc);
+//        StudentService ss = new StudentService("sdf", student1);
+//        mb.register(ss);
+//        mb.subscribeBroadcast(PublishConferenceBroadcast.class,ss);
+//        mb.sendBroadcast(new PublishConferenceBroadcast(vec));
+
 
 
         if (args.length!=1) {
@@ -235,11 +251,20 @@ public class CRMSRunner {
                     datatmp.put("type", typeToString(m.getData().getType()));
                     datatmp.put("size", m.getData().getSize());
                     modeltmp.put("data", datatmp);
-                    if(m.getStatus()==Model.Status.Trained)
-                        modeltmp.put("status", "Trained");
-                    else
+                    if (m.getResult()!=Model.Result.None) {
                         modeltmp.put("status", "Tested");
+                    }
+                    else {
+                        modeltmp.put("status", "Trained");
+                    }
                     modeltmp.put("results", resultToString(m.getResult()));
+//                    if(m.getStatus()==Model.Status.Trained) {
+//                        modeltmp.put("status", "Trained");
+//                    }
+//                    else if (m.getStatus()==Model.Status.Tested) {
+//                        modeltmp.put("status", "Tested");
+//                    }
+//                    modeltmp.put("results", resultToString(m.getResult()));
                     trainedModels.add(modeltmp);
                 }
             }

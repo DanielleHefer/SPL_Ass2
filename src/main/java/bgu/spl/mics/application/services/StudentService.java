@@ -66,6 +66,7 @@ public class StudentService extends MicroService {
                     firstWasSent=true;
                 }
 
+                //Student is holding a future that represent a model being trained/tested
                 else if (future!=null && future.isDone()) {
                     Model model = future.get();
                     if (model.getStatus() == Model.Status.Trained) {
