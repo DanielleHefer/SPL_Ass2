@@ -39,6 +39,9 @@ public class CPU {
     private int loadFactor;
     private Object loadFactorLock;
 
+    private int totalDBProcessed;
+    private int CPUTimeUnits;
+
     public CPU (int cores) {
         this.cores=cores;
         innerQueue = new LinkedBlockingQueue<>();
@@ -51,6 +54,8 @@ public class CPU {
         processTick=-1;
         loadFactor = (32/cores);//Maybe multiply by 2 in order to simulate the average OR calculate the real average OR neither
         loadFactorLock = new Object();
+        totalDBProcessed=0;
+        CPUTimeUnits=0;
     }
 
     /**
@@ -113,6 +118,14 @@ public class CPU {
 
     public BlockingQueue<DataBatch> getInnerQueue(){
         return innerQueue;
+    }
+
+    public int getCPUTimeUnits () {
+        return CPUTimeUnits;
+    }
+
+    public int getTotalDBProcessed(){
+        return totalDBProcessed;
     }
 
     public void pushToInnerQueue(DataBatch db) {
@@ -233,8 +246,8 @@ public class CPU {
     }
 
     public void completeBatch() {
-        cluster.increaseTotalDBProcessedCPU();
-        cluster.increaseCPUTimeUnits(processTick);
+        totalDBProcessed++;
+        CPUTimeUnits+=processTick;
         currDataBatch.setProcessedByCPU();
         currDataBatch.setTimeToProcessByCPU(processTick);
         cluster.addBatchToVRAM(currDataBatch);

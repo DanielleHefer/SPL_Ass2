@@ -49,6 +49,10 @@ public class ConferenceService extends MicroService {
                 if (currTick == conferenceDate) {
                     Vector<String> modelNames = conference.getModelsNames();
                     sendBroadcast(new PublishConferenceBroadcast(modelNames));
+
+                    //%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    System.out.println("Conference sent publications "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+
                     terminate();
                 }
             }

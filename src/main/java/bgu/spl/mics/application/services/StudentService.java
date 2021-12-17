@@ -27,6 +27,7 @@ public class StudentService extends MicroService {
 
     private Future<Model> future;
     private boolean firstWasSent;
+    private int currTick;
 
     //In the main file, after creating a student, call setStudentModels(Vector models) and then create a student service.
     //Set in main file: StudentService(student.getName(), student) so we will call the constructor with that
@@ -36,6 +37,7 @@ public class StudentService extends MicroService {
         future = null;
         firstWasSent=false;
         trainModelEvents = new LinkedList<>();
+        currTick=0;
         createTrainModelEvents(student.getStudentModels());
     }
 
@@ -49,9 +51,15 @@ public class StudentService extends MicroService {
     public void sendTrainModelEvents() {
         if(!trainModelEvents.isEmpty()) {
             TrainModelEvent e = trainModelEvents.pollFirst();
+
+            //%%%%%%%%%%%%%%%%%%%%%
+            System.out.println("Thread "+Thread.currentThread().getId()+" Student send Train Model "+ Thread.currentThread().getName()+" - Model - "+e.getModel().getName()
+                    +" - tick "+currTick);
+
             future = super.sendEvent(e);
         }
     }
+
 
     public void registration(){
         messageBus.register(this);
@@ -61,6 +69,7 @@ public class StudentService extends MicroService {
                 terminate();
             }
             else {
+                currTick=tick.getCurrTick();
                 if(!firstWasSent) {
                     sendTrainModelEvents();
                     firstWasSent=true;
@@ -71,8 +80,18 @@ public class StudentService extends MicroService {
                     Model model = future.get();
                     if (model.getStatus() == Model.Status.Trained) {
                         future = super.sendEvent(new TestModelEvent<>(model));
+
+                        //%%%%%%%%%%%%%%%%%%%%%
+                        System.out.println("Thread "+Thread.currentThread().getId()+" Student send Test Model "+ Thread.currentThread().getName()+" - Model - "+model.getName()
+                                +" - tick "+currTick);
+
                     } else if (model.getStatus() == Model.Status.Tested) {
                         super.sendEvent(new PublishResultsEvent<>(model));
+
+                        //%%%%%%%%%%%%%%%%%%%%%
+                        System.out.println("Thread "+Thread.currentThread().getId()+" Student send Publish Model "+ Thread.currentThread().getName()+" - Model - "+model.getName()
+                                +" - tick "+currTick);
+
                         future = null;
                         sendTrainModelEvents();
                     }

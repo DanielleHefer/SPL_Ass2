@@ -22,16 +22,11 @@ public class Cluster {
 	private HashSet<GPU> GPUs;
 	private LinkedBlockingQueue<CPU> CPUs;
 	private LinkedList<String> trainedModelsNames;
-	private Integer totalDBProcessedCPU;
-	private int CPUTimeUnits;
-	private int GPUTimeUnits;
-	private Object lockGPUTimeUnits;
-	private Object lockCPUTimeUnits;
 
 
-    /**
-     * Retrieves the single instance of this class.
-     */
+	/**
+	 * Retrieves the single instance of this class.
+	 */
 	private static class ClusterInstance{
 		private static Cluster instance = new Cluster();
 	}
@@ -44,11 +39,6 @@ public class Cluster {
 		GPUs = new HashSet<>();
 		CPUs = new LinkedBlockingQueue<>();
 		trainedModelsNames = new LinkedList<>();
-		totalDBProcessedCPU=0;
-		CPUTimeUnits=0;
-		GPUTimeUnits=0;
-		lockGPUTimeUnits = new Object();
-		lockCPUTimeUnits = new Object();
 	}
 
 	public void setGPUs (LinkedList<GPU> gpu) {
@@ -64,51 +54,21 @@ public class Cluster {
 	}
 
 	public void sendUnprocessedBatch(DataBatch db) {
-			int minLF = Integer.MAX_VALUE;
-			CPU minCPU = null;
-			for (CPU cpu : CPUs) {
-				int currLF = cpu.getLoadFactor()+(32/cpu.getCores())*db.getTicksForType();
-				if(currLF<minLF){
-					minLF = currLF;
-					minCPU = cpu;
-				}
-			minCPU.pushToInnerQueue(db);
+		int minLF = Integer.MAX_VALUE;
+		CPU minCPU = null;
+		for (CPU cpu : CPUs) {
+			int currLF = cpu.getLoadFactor()+(32/cpu.getCores())*db.getTicksForType();
+			if(currLF<minLF){
+				minLF = currLF;
+				minCPU = cpu;
+			}
 		}
-	}
-
-	public void increaseGPUTimeUnits(int ticks) {
-		synchronized (lockGPUTimeUnits) {
-			GPUTimeUnits += ticks;
-		}
-	}
-
-	public void increaseCPUTimeUnits(int ticks) {
-		synchronized (lockCPUTimeUnits) {
-			CPUTimeUnits += ticks;
-		}
-	}
-
-	public int getCPUTimeUnits() {
-		return CPUTimeUnits;
-	}
-
-	public int getTotalDBProcessed() {
-		return totalDBProcessedCPU;
-	}
-
-	public int getGPUTimeUnits() {
-		return GPUTimeUnits;
+		minCPU.pushToInnerQueue(db);
 	}
 
 	public void addModelName(String name) {
 		//WE DECIDED NOT TO USE SYNCHRONIZED HERE *********
 		trainedModelsNames.add(name);
-	}
-
-	public void increaseTotalDBProcessedCPU() {
-		synchronized (totalDBProcessedCPU) {
-			totalDBProcessedCPU++;
-		}
 	}
 
 	public void addBatchToVRAM(DataBatch db) {

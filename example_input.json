@@ -3,40 +3,145 @@
     [
         {
             "name": "Simba",
-            "department": "Computer Science",            
+            "department": "Computer Science",
             "status": "MSc",
             "models":
             [
                 {
                     "name": "YOLO10",
-                    "type": "Tabular",
-                    "size": 1000
+                    "type": "Images",
+                    "size": 200000
                 },
                 {
                     "name": "ResNet9000",
-                    "type": "Tabular",
-                    "size": 1000
+                    "type": "Images",
+                    "size": 200000
                 },
                 {
                     "name": "LessEfficientNet",
-                    "type": "Tabular",
-                    "size": 1000
+                    "type": "Images",
+                    "size": 20000
                 },
                 {
                     "name": "DensestNet",
-                    "type": "Tabular",
-                    "size": 1000
+                    "type": "Images",
+                    "size": 200000
                 }
             ]
 
-        }],
+        },
+        {
+            "name": "Zazu",
+            "department": "EE",
+            "status": "PhD",
+            "models":
+            [
+                {
+                    "name": "VIT",
+                    "type": "Images",
+                    "size": 100000000
+                }
+            ]
 
-    "GPUS": ["RTX3090"],
-    "CPUS": [32],
+        },
+        {
+            "name": "Pumba",
+            "department": "Computer Science",
+            "status": "PhD",
+            "models":
+            [
+                {
+                    "name": "Bert",
+                    "type": "Text",
+                    "size": 1000000
+                },
+                {
+                    "name": "GPT4",
+                    "type": "Text",
+                    "size": 1000000
+                },
+                {
+                    "name": "GPT5",
+                    "type": "Text",
+                    "size": 200000
+                },
+                {
+                    "name": "GPT10",
+                    "type": "Text",
+                    "size": 50000
+                }
+            ]
+
+        },
+        {
+            "name": "Timon",
+            "department": "SE",
+            "status": "MSc",
+            "models":
+            [
+                {
+                    "name": "Percepetron",
+                    "type": "Tabular",
+                    "size": 1000000
+                },
+                {
+                    "name": "GNN",
+                    "type": "Tabular",
+                    "size": 1000000
+                },
+                {
+                    "name": "MoreStyleGAN",
+                    "type": "Images",
+                    "size": 100000
+                },
+                {
+                    "name": "ConditionalGAN",
+                    "type": "Images",
+                    "size": 500000
+                }
+            ]
+
+        },
+        {
+            "name": "Nala",
+            "department": "Computer Science",
+            "status": "PhD",
+            "models":
+            [
+                {
+                    "name": "YOLO9000",
+                    "type": "Images",
+                    "size": 100000
+                },
+                {
+                    "name": "VIT2",
+                    "type": "Images",
+                    "size": 1000000
+                },
+                {
+                    "name": "MuchMoreEfficientNet",
+                    "type": "Images",
+                    "size": 20000
+                },
+                {
+                    "name": "DenserNet",
+                    "type": "Images",
+                    "size": 100000
+                }
+            ]
+
+        }
+    ],
+    "GPUS": ["RTX3090","RTX3090","RTX2080","GTX1080"],
+    "CPUS": [32,32,32,16,16,16,16],
     "Conferences":
     [
-        {"name": "ICML", "date": 900}
+        {"name": "ICML", "date": 20000},
+        {"name": "NeurIPS", "date": 25000},
+        {"name": "CVPR", "date": 30000},
+        {"name": "ECCV", "date": 40000},
+        {"name": "AISTATS", "date": 50000}
     ],
     "TickTime": 1,
-    "Duration": 1000
+    "Duration": 55000
 }

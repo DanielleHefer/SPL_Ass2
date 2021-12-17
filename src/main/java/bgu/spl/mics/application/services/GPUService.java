@@ -44,16 +44,19 @@ public class GPUService extends MicroService {
                         gpu.testProcess();
 
                         //%%%%%%%%%%%%%%%%%%%%%%%%5
-                        System.out.println("GPU Test finished "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                        System.out.println("GPU Test finished "+ Thread.currentThread().getName()+" - Model - "+gpu.getModel().getName()+
+                                " - tick "+tick.getCurrTick());
 
-                        super.complete(testEvent, testEvent.getModel());
+                        super.complete(testEvent, gpu.getModel());
                         gpu.resetGPU();
+                        gpu.setModel(null);
                     }
 
                     if (!gpu.getInnerTrainQueue().isEmpty()) {
 
                         //%%%%%%%%%%%%%%%%%%%%%%%%%%
-                        System.out.println("GPU start Train "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                        System.out.println("GPU start Train "+ Thread.currentThread().getName()+
+                                " - tick "+tick.getCurrTick());
 
                         TrainModelEvent trainEvent = gpu.getInnerTrainQueue().poll();
                         trainEvent.getModel().setStatus(Model.Status.Training);
@@ -63,7 +66,8 @@ public class GPUService extends MicroService {
                         for (int i=0; i<gpu.getVRAMLimitation() && i<gpu.getDataBatches().size(); i++) {
 
                             //%%%%%%%%%%%%%%%%%%%%%%%%%%
-                            System.out.println("GPU send batch to Cluster "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                            System.out.println("GPU send batch to Cluster "+ Thread.currentThread().getName()+
+                                    " - tick "+tick.getCurrTick());
 
                             gpu.sendBatchToCluster();
                         }
@@ -79,7 +83,8 @@ public class GPUService extends MicroService {
                         if(gpu.getVRAM().size()>0) {
 
                             //%%%%%%%%%%%%%%%%%%%%%%%%%%
-                            System.out.println("GPU take baatch from VRAM "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                            System.out.println("GPU take batch from VRAM "+ Thread.currentThread().getName()+" - Model - "+gpu.getModel().getName()+
+                                    " - tick "+tick.getCurrTick());
 
                             gpu.pollFromVRAM();
                         }
@@ -108,11 +113,12 @@ public class GPUService extends MicroService {
                     else {
 
                         //Check if the GPU is done processing the current data batch
-                        if (gpu.getCurrTick()-gpu.getStartTick()>gpu.getProcessTick()) {
+                        if (gpu.getCurrTick()-gpu.getStartTick()==gpu.getProcessTick()) {
                             gpu.completeDataBatch();
 
                             //%%%%%%%%%%%%%%%%%%%%%%%%%%
-                            System.out.println("GPU completed data bacth "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                            System.out.println("GPU completed data bacth "+ Thread.currentThread().getName()+
+                                    " - tick "+tick.getCurrTick());
 
                             //Check if the GPU is done processing all the data batches
                             if (gpu.getBatchesAmountToProcess()==0) {
@@ -134,7 +140,8 @@ public class GPUService extends MicroService {
                             else if(gpu.getVRAM().size()>0) {
 
                                 //%%%%%%%%%%%%%%%%%%%%%%%%%%
-                                System.out.println("GPU take from VRAM "+ Thread.currentThread().getName()+" - tick "+tick.getCurrTick());
+                                System.out.println("GPU take from VRAM "+ Thread.currentThread().getName()+" - Model - "+gpu.getModel().getName()+
+                                        " - tick "+tick.getCurrTick());
 
                                 gpu.pollFromVRAM();
                             }

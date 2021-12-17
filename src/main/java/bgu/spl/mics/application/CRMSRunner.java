@@ -151,7 +151,7 @@ public class CRMSRunner {
                 gpusObjList.add(gpu);        //update the constructor  ********
 
                 //Create student service
-                GPUService gpuService = new GPUService("GPU Service",gpu);
+                GPUService gpuService = new GPUService("GPU Service - "+counter,gpu);
                 gpuService.registration();
                 threads.add(new Thread(gpuService, "GPU Service - "+counter));
                 counter++;
@@ -165,7 +165,7 @@ public class CRMSRunner {
             for (JsonElement cpuElement: cpusList){
                 CPU cpu = new CPU(cpuElement.getAsInt());
                 cpusObjList.add(cpu);     //update the constructor  ********
-                CPUService cpuService = new CPUService("CPU Service",cpu);
+                CPUService cpuService = new CPUService("CPU Service - "+counter,cpu);
                 cpuService.registration();
                 threads.add(new Thread(cpuService,"CPU Service - "+counter));
                 counter++;
@@ -225,7 +225,6 @@ public class CRMSRunner {
         }
 
         System.out.println("done");
-
 
         // *************** Output *****************
 
@@ -295,11 +294,23 @@ public class CRMSRunner {
         }
         output.put("conferences", confsOutput);
 
+//        Cluster cluster = Cluster.getInstance();
+//
+//        int cpusTotalUsageTIme = cluster.getCPUTimeUnits();
+//        int gpusTotalUsageTIme = cluster.getGPUTimeUnits();
+//        int totalDBProcessed = cluster.getTotalDBProcessed();
 
-        Cluster cluster = Cluster.getInstance();
-        int cpusTotalUsageTIme = cluster.getCPUTimeUnits();
-        int gpusTotalUsageTIme = cluster.getGPUTimeUnits();
-        int totalDBProcessed = cluster.getTotalDBProcessed();
+        int cpusTotalUsageTIme = 0;
+        int gpusTotalUsageTIme = 0;
+        int totalDBProcessed = 0;
+
+        for (GPU g : gpusObjList) {
+            gpusTotalUsageTIme += g.getGPUTimeUnits();
+        }
+        for (CPU c : cpusObjList) {
+            cpusTotalUsageTIme += c.getCPUTimeUnits();
+            totalDBProcessed += c.getTotalDBProcessed();
+        }
 
         output.put("cpuTimeUsed", cpusTotalUsageTIme);
         output.put("gpuTimeUsed", gpusTotalUsageTIme);

@@ -19,7 +19,7 @@ public class GPU {
     /**
      * @INV:
      *      0<=getCurrVRAMSize()<=getVRAMLimitation()
-     *      getBatchesAmountToProcess()>=0
+            *      getBatchesAmountToProcess()>=0
      *      getCurrTick()>=0
      *      getStartTick()>=-1
      *      getProcessTick()==1 iff getType()==RTX3090
@@ -42,7 +42,7 @@ public class GPU {
     private int processTick; //3090=1 tick, 2080=2 ticks, 1080=4 ticks (process after the cpu returned)
     private LinkedList<DataBatch> dataBatches; //data batches on the disk, preprocessed by CPU
     private int batchesAmountToProcess; //initialized to be model.data.size/1000,
-                                        // we will decrease until getting to 0, and then the gpu is done processing
+    // we will decrease until getting to 0, and then the gpu is done processing
 
     private DataBatch currDataBatch; //The data batch the gpu is currently processing
     private TrainModelEvent currTrainEvent;
@@ -57,6 +57,8 @@ public class GPU {
     private int currTick; //might be changed later (only for testing purpose)
     private int startTick;
 
+    private int GPUTimeUnits;
+
     public GPU (Type type) {
         //Decided for now that this is the only constructor
         this.type=type;
@@ -69,12 +71,13 @@ public class GPU {
 
         innerTestQueue = new LinkedList<>();
         innerTrainQueue = new PriorityQueue<TrainModelEvent>((a,b) ->
-            a.getModelSize()*a.getModel().getData().typeToNum() - b.getModelSize()*b.getModel().getData().typeToNum());
+                a.getModelSize()*a.getModel().getData().typeToNum() - b.getModelSize()*b.getModel().getData().typeToNum());
 
         model = null;
         currDataBatch = null;
         currTrainEvent = null;
         VRAM = new LinkedBlockingQueue<>();
+        GPUTimeUnits=0;
 
         switch (type) {
             case RTX3090: {
@@ -405,6 +408,10 @@ public class GPU {
         startTick=-1;
         decreaseBatchesAmountToProcess();
         getModel().getData().increaseProcessed();
-        cluster.increaseGPUTimeUnits(processTick);
+        GPUTimeUnits+=processTick;
+    }
+
+    public int getGPUTimeUnits(){
+        return GPUTimeUnits;
     }
 }

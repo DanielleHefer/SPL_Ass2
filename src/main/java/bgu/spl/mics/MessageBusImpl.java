@@ -13,22 +13,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MessageBusImpl implements MessageBus {
 
 	//A map that represents the existing events and broadcasts and the microservices that subscribed to each one
-	private ConcurrentHashMap<Class<? extends Message>, LinkedBlockingQueue<MicroService>> subscribers;
+	private HashMap<Class<? extends Message>, LinkedBlockingQueue<MicroService>> subscribers;
 
 	//Map that connect each event to its future object
 	private ConcurrentHashMap<Message, Future> futures;
 
 	//Map that connect each microservice with its queue
-	private ConcurrentHashMap<MicroService, LinkedBlockingQueue<Message>> queues;
+	private HashMap<MicroService, LinkedBlockingQueue<Message>> queues;
 
 	private static class MessageBusInstance{
 		private static MessageBusImpl instance = new MessageBusImpl();
 	}
 
 	private MessageBusImpl() {
-		subscribers = new ConcurrentHashMap<>();
+		subscribers = new HashMap<>();
 		futures = new ConcurrentHashMap<>();
-		queues = new ConcurrentHashMap<>();
+		queues = new HashMap<>();
 	}
 
 	public static MessageBusImpl getInstance() {
@@ -40,14 +40,19 @@ public class MessageBusImpl implements MessageBus {
 		//In order that other threads that want to create the same event type to the map
 		//Or in order that other threads that want to send event with the same event type
 
-		LinkedBlockingQueue<MicroService> eventSubscribers = subscribers.get(type);
-		if(eventSubscribers!=null) {
-			eventSubscribers.add(m);
+		synchronized (subscribers) {
+			LinkedBlockingQueue<MicroService> eventSubscribers = subscribers.get(type);
+			if (eventSubscribers==null) {
+				LinkedBlockingQueue<MicroService> ll = new LinkedBlockingQueue<>();
+				ll.add(m);
+				subscribers.put(type, ll);
+				return;
+			}
+		}
+		synchronized (subscribers.get(type)) {
+			subscribers.get(type).add(m);
 			return;
 		}
-		LinkedBlockingQueue<MicroService> ll = new LinkedBlockingQueue<>();
-		ll.add(m);
-		subscribers.put(type, ll);
 	}
 
 
@@ -72,8 +77,11 @@ public class MessageBusImpl implements MessageBus {
 		LinkedBlockingQueue<MicroService> list = subscribers.get(b.getClass());
 		if (list != null) {
 			for (MicroService microService : list) {
-				if (queues.get(microService)!=null) {
-					queues.get(microService).offer(b);
+				synchronized (queues.get(microService)) {
+					if (queues.get(microService) != null) {
+						queues.get(microService).offer(b);
+					}
+					queues.get(microService).notifyAll();
 				}
 			}
 		}
@@ -99,13 +107,22 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
+
+		//%%%%%%%%%%%%%%%%%%5
 		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - sendEvent");    //%%%%%%%%%%%%%%%%%%%%%
 
 		MicroService microservice = findNextMicroservice(e);
 		if (microservice!=null) {
 			Future<T> future = new Future<>();
 			futures.put(e,future);
-			queues.get(microservice).offer(e);
+			synchronized (queues.get(microservice)) {
+				queues.get(microservice).offer(e);
+
+				//%%%%%%%%%%%%%%%%%%%%%%%
+				System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+
+						" - put in queue of microservice "+microservice.getName());    //%%%%%%%%%%%%%%%%%%%%%
+				queues.get(microservice).notifyAll();
+			}
 			return future;
 		}
 		//there is no microservice in the queue that can handle the event
@@ -116,7 +133,7 @@ public class MessageBusImpl implements MessageBus {
 	public void register(MicroService m) {
 		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - register");    //%%%%%%%%%%%%%%%%%%%%%
 
-		// "it creates a queue for each micro service using the register method" *******
+		//Didn't lock because it happens before start of the threads *********
 		queues.put(m, new LinkedBlockingQueue<>());
 
 	}
@@ -126,12 +143,16 @@ public class MessageBusImpl implements MessageBus {
 		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - unregister");    //%%%%%%%%%%%%%%%%%%%%%
 
 		//Delete the queue
-		queues.remove(m);
+		synchronized (queues) {
+			queues.remove(m);
+		}
 
 		//Delete the microservice from the events he subscribed to
 		for (Class<? extends Message> message : subscribers.keySet()) {
-			if(subscribers.get(message).contains(m)){
-				subscribers.get(message).remove(m);
+			synchronized (subscribers.get(message)) {
+				if (subscribers.get(message).contains(m)) {
+					subscribers.get(message).remove(m);
+				}
 			}
 		}
 	}
@@ -139,7 +160,15 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
 		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - awaitMessage");    //%%%%%%%%%%%%%%%%%%%%%
-		return queues.get(m).take();
+		synchronized (queues.get(m)) {
+			while(queues.get(m).isEmpty()){
+				try {
+					queues.get(m).wait();
+				}
+				catch (Exception e) {}
+			}
+			return queues.get(m).take();
+		}
 	}
 
 	//WE ADDED *****
