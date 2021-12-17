@@ -21,8 +21,9 @@ public class CPUService extends MicroService {
         this.cpu=cpu;
     }
 
-    @Override
-    protected void initialize() {
+    public void registration(){
+        messageBus.register(this);
+
         super.subscribeBroadcast(TickBroadcast.class, tick ->{
 
             if (tick.getCurrTick() == null) {
@@ -50,6 +51,41 @@ public class CPUService extends MicroService {
                 }
             }
         });
+
+    }
+
+    @Override
+    protected void initialize() {
+
+//        messageBus.register(this);
+//
+//        super.subscribeBroadcast(TickBroadcast.class, tick ->{
+//
+//            if (tick.getCurrTick() == null) {
+//                terminate();
+//            }
+//
+//            else{
+//                cpu.setCurrTick(tick.getCurrTick());
+//                //CPU is not currently working on a batch
+//                if (cpu.getCurrDataBatch()==null) {
+//                    if(!cpu.getInnerQueue().isEmpty()) {
+//                        cpu.takeBatchFromQueue();
+//                    }
+//                }
+//
+//                //CPU is currently processing a batch
+//                else {
+//                    //CPU is done processing the curr DataBatch
+//                    if (cpu.getCurrTick()-cpu.getStartTick()>cpu.getProcessTick()){
+//                        cpu.completeBatch();
+//                        if(!cpu.getInnerQueue().isEmpty()) {
+//                            cpu.takeBatchFromQueue();
+//                        }
+//                    }
+//                }
+//            }
+//        });
 
     }
 }

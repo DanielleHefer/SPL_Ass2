@@ -36,7 +36,8 @@ public class CPU {
 
     private int processTick;
     private LinkedBlockingQueue<DataBatch> innerQueue;
-    private Integer loadFactor;
+    private int loadFactor;
+    private Object loadFactorLock;
 
     public CPU (int cores) {
         this.cores=cores;
@@ -49,6 +50,7 @@ public class CPU {
         dataTypeNeededTicks=-1;
         processTick=-1;
         loadFactor = (32/cores);//Maybe multiply by 2 in order to simulate the average OR calculate the real average OR neither
+        loadFactorLock = new Object();
     }
 
     /**
@@ -114,7 +116,7 @@ public class CPU {
     }
 
     public void pushToInnerQueue(DataBatch db) {
-        innerQueue.offer(db);
+        innerQueue.add(db);
         updateLoadFactor((32/cores)*db.getTicksForType());
     }
 
@@ -134,13 +136,13 @@ public class CPU {
     }
 
     public int getLoadFactor() {
-        synchronized (loadFactor) {
+        synchronized (loadFactorLock) {
             return loadFactor;
         }
     }
 
     public void updateLoadFactor(int lf) {
-        synchronized (loadFactor) {
+        synchronized (loadFactorLock) {
             loadFactor += lf;
         }
     }

@@ -35,12 +35,14 @@ public class StudentService extends MicroService {
         this.student = student;
         future = null;
         firstWasSent=false;
+        trainModelEvents = new LinkedList<>();
         createTrainModelEvents(student.getStudentModels());
     }
 
     public void createTrainModelEvents(Vector<Model> models) {
         for (Model m : models) {
-            trainModelEvents.add(new TrainModelEvent(m));
+            TrainModelEvent model = new TrainModelEvent(m);
+            trainModelEvents.add(model);
         }
     }
 
@@ -51,8 +53,8 @@ public class StudentService extends MicroService {
         }
     }
 
-    @Override
-    protected void initialize() {
+    public void registration(){
+        messageBus.register(this);
 
         super.subscribeBroadcast(TickBroadcast.class, tick-> {
             if(tick.getCurrTick()==null) {
@@ -80,5 +82,38 @@ public class StudentService extends MicroService {
         super.subscribeBroadcast(PublishConferenceBroadcast.class, conference -> {
             student.readPublishes(conference.getModelsNames());
         });
+    }
+
+    @Override
+    protected void initialize() {
+        messageBus.register(this);
+//
+//        super.subscribeBroadcast(TickBroadcast.class, tick-> {
+//            if(tick.getCurrTick()==null) {
+//                terminate();
+//            }
+//            else {
+//                if(!firstWasSent) {
+//                    sendTrainModelEvents();
+//                    firstWasSent=true;
+//                }
+//
+//                else if (future!=null && future.isDone()) {
+//                    Model model = future.get();
+//                    if (model.getStatus() == Model.Status.Trained) {
+//                        future = super.sendEvent(new TestModelEvent<>(model));
+//                    } else if (model.getStatus() == Model.Status.Tested) {
+//                        super.sendEvent(new PublishResultsEvent<>(model));
+//                        future = null;
+//                        sendTrainModelEvents();
+//                    }
+//                }
+//            }
+//        });
+//
+//        super.subscribeBroadcast(PublishConferenceBroadcast.class, conference -> {
+//            student.readPublishes(conference.getModelsNames());
+//        });
+//
     }
 }

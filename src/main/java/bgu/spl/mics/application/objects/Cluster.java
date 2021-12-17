@@ -51,6 +51,17 @@ public class Cluster {
 		lockCPUTimeUnits = new Object();
 	}
 
+	public void setGPUs (LinkedList<GPU> gpu) {
+		for (GPU g : gpu) {
+			GPUs.add(g);
+		}
+	}
+
+	public void setCPUs (LinkedList<CPU> cpu) {
+		for (CPU c : cpu) {
+			CPUs.add(c);
+		}
+	}
 
 	public void sendUnprocessedBatch(DataBatch db) {
 		//We synchronized the whole list - might be changed *************************

@@ -25,8 +25,15 @@ public class TimeService extends MicroService{
 		this.duration=duration;
 	}
 
+	public void registration(){
+		messageBus.register(this);
+	}
+
 	@Override
 	protected void initialize() {
+
+		//messageBus.register(this);
+
 		TickBroadcast tickBroadcast = new TickBroadcast(0);
 		for(int tick=1; tick < duration; tick++) {
 			tickBroadcast.increaseTick();

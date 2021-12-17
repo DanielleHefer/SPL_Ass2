@@ -73,12 +73,13 @@ public class CRMSRunner {
         }
 
         LinkedList<Thread> threads = new LinkedList<>();
-        List<Model> modelsObjectList = new LinkedList<>();
 
         Gson gson = new Gson();
         List<Student> studentsObjectsList = new LinkedList<>();
         List<ConfrenceInformation> conferencesObjList = new LinkedList<>();
-        Thread timeService = null;
+        List<GPU> gpusObjList = new LinkedList<GPU>();
+        List<CPU> cpusObjList = new LinkedList<CPU>();
+        Thread timeServiceThread = null;
 
         try{
             Reader reader = Files.newBufferedReader(Paths.get(args[0]));
@@ -86,7 +87,7 @@ public class CRMSRunner {
             //Each object in the jsonArray is from type jsonElement
             JsonArray studentsList = gson.fromJson(jsonObject.get("Students"), JsonArray.class);
             //List<Student> studentsObjectsList = new LinkedList<>();
-            //List<Model> modelsObjectList = new LinkedList<>();
+            List<Model> modelsObjectList = new LinkedList<>();
             //Transfer each jsonElement to jsonObject
             for(JsonElement studentElement: studentsList){
                 JsonObject studentJsonObj = studentElement.getAsJsonObject();
@@ -95,9 +96,6 @@ public class CRMSRunner {
                 Student student = new Student(studentJsonObj.get("name").getAsString(),
                         studentJsonObj.get("department").getAsString(),
                         stringToDegree(studentJsonObj.get("status").getAsString()));
-
-                //Create student service
-                threads.add(new Thread(new StudentService("Student Service",student), "Student Service - " + student.getName()));
 
                 studentsObjectsList.add(student);
 
@@ -117,6 +115,12 @@ public class CRMSRunner {
                     modelsObjectList.add(model);
                 }
                 student.setStudentModels(new Vector<Model>(modelsObjectList));
+
+                //Create student service
+                StudentService studentService = new StudentService("Student Service",student);
+                studentService.registration();
+                threads.add(new Thread(studentService, "Student Service - " + student.getName()));
+
                 modelsObjectList.clear();
                 //Add the data to model and the model to Student!! *****************
             }
@@ -124,33 +128,39 @@ public class CRMSRunner {
             // Create gpu objects
             JsonObject gpus = gson.fromJson(reader, JsonObject.class);
             JsonArray gpusList = gson.fromJson(jsonObject.get("GPUS"), JsonArray.class);
-            List<GPU> gpusObjList = new LinkedList<GPU>();
+            //List<GPU> gpusObjList = new LinkedList<GPU>();
             int counter = 0;
             for (JsonElement gpuElement: gpusList){
                 GPU gpu = new GPU(stringToGPUType(gpuElement.getAsString()));
                 gpusObjList.add(gpu);        //update the constructor  ********
 
                 //Create student service
-                threads.add(new Thread(new GPUService("GPU Service",gpu), "GPU Service - "+counter));
+                GPUService gpuService = new GPUService("GPU Service",gpu);
+                gpuService.registration();
+                threads.add(new Thread(gpuService, "GPU Service - "+counter));
                 counter++;
             }
 
             // Create cpu objects
             JsonObject cpus = gson.fromJson(reader, JsonObject.class);
             JsonArray cpusList = gson.fromJson(jsonObject.get("CPUS"), JsonArray.class);
-            List<CPU> cpusObjList = new LinkedList<CPU>();
+            //List<CPU> cpusObjList = new LinkedList<CPU>();
             counter=0;
             for (JsonElement cpuElement: cpusList){
                 CPU cpu = new CPU(cpuElement.getAsInt());
                 cpusObjList.add(cpu);     //update the constructor  ********
-                threads.add(new Thread(new CPUService("CPU Service",cpu),"CPU Service - "+counter));
+                CPUService cpuService = new CPUService("CPU Service",cpu);
+                cpuService.registration();
+                threads.add(new Thread(cpuService,"CPU Service - "+counter));
                 counter++;
             }
 
             //Need to add TickTime and Duration *****************************
             int tick = jsonObject.get("TickTime").getAsInt();
             int duration = jsonObject.get("Duration").getAsInt();
-            timeService = new Thread(new TimeService("Time Service", tick,duration), "Time Service");
+            TimeService timeService = new TimeService("Time Service", tick,duration);
+            timeService.registration();
+            timeServiceThread = new Thread(timeService, "Time Service");
             //threads.add(timeService);
 
             // Create conference objects
@@ -163,7 +173,9 @@ public class CRMSRunner {
                         conferenceJsonObj.get("name").getAsString(),
                         conferenceJsonObj.get("date").getAsInt());
 
-                threads.add(new Thread(new ConferenceService("Conference Service",confrenceInformation),"Conference - "+confrenceInformation.getName()));
+                ConferenceService conferenceService = new ConferenceService("Conference Service",confrenceInformation);
+                conferenceService.registration();
+                threads.add(new Thread(conferenceService,"Conference - "+confrenceInformation.getName()));
                 conferencesObjList.add(confrenceInformation);
             }
         }
@@ -172,18 +184,25 @@ public class CRMSRunner {
 
         }
 
+        Cluster.getInstance().setCPUs((LinkedList<CPU>) cpusObjList);
+        Cluster.getInstance().setGPUs((LinkedList<GPU>) gpusObjList);
+
         //Start all threads
+
         for (Thread t : threads) {
             t.start();
         }
-        timeService.start();
+
+        timeServiceThread.start();
+
 
         //Join all threads
         try {
+            timeServiceThread.join();
             for (Thread t : threads) {
-                t.join();
+                if (t.isAlive())
+                    t.join();
             }
-            timeService.join();
         }
         catch (InterruptedException e) {
             e.printStackTrace();

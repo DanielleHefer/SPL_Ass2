@@ -261,7 +261,8 @@ public class GPU {
      */
     public void setModel(Model model) {
         this.model=model;
-        batchesAmountToProcess = this.model.getData().getSize()/1000;
+        if (model!=null)
+            batchesAmountToProcess = this.model.getData().getSize()/1000;
     }
 
 

@@ -29,8 +29,9 @@ public class ConferenceService extends MicroService {
         conferenceDate=conference.getDate();
     }
 
-    @Override
-    protected void initialize() {
+    public void registration(){
+        messageBus.register(this);
+
         //Subscribe to PublishResultEvent
         super.subscribeEvent(PublishResultsEvent.class,  publishEvent->{
             conference.aggregate(publishEvent.getModel());
@@ -52,5 +53,33 @@ public class ConferenceService extends MicroService {
                 }
             }
         });
+    }
+
+    @Override
+    protected void initialize() {
+
+//        messageBus.register(this);
+//
+//        //Subscribe to PublishResultEvent
+//        super.subscribeEvent(PublishResultsEvent.class,  publishEvent->{
+//            conference.aggregate(publishEvent.getModel());
+//        });
+//
+//        //Subscribe to tickBroadcast
+//        super.subscribeBroadcast(TickBroadcast.class, tick->{
+//
+//            if(tick.getCurrTick()==null) {
+//                terminate();
+//            }
+//
+//            else {
+//                currTick=tick.getCurrTick();
+//                if (currTick == conferenceDate) {
+//                    Vector<String> modelNames = conference.getModelsNames();
+//                    sendBroadcast(new PublishConferenceBroadcast(modelNames));
+//                    terminate();
+//                }
+//            }
+//        });
     }
 }
