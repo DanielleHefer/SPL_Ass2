@@ -1,21 +1,17 @@
 package bgu.spl.mics.application;
 
-import bgu.spl.mics.MessageBusImpl;
-import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.objects.*;
 import bgu.spl.mics.application.services.*;
 import com.google.gson.*;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
 
 /** This is the Main class of Compute Resources Management System application. You should parse the input file,
  * create the different instances of the objects, and run the system.
@@ -67,21 +63,6 @@ public class CRMSRunner {
     }
 
     public static void main(String[] args) {
-
-//        ConfrenceInformation con = new ConfrenceInformation("nnnna",10);
-//        ConferenceService cs = new ConferenceService("dsfsd", con);
-//        MessageBusImpl mb= MessageBusImpl.getInstance();
-//        mb.register(cs);
-//        Vector <String> vec = new Vector<>();
-//        vec.add("a");
-//        vec.add("b");
-//        Student student1 = new Student("asd", "dsf", Student.Degree.MSc);
-//        StudentService ss = new StudentService("sdf", student1);
-//        mb.register(ss);
-//        mb.subscribeBroadcast(PublishConferenceBroadcast.class,ss);
-//        mb.sendBroadcast(new PublishConferenceBroadcast(vec));
-
-
 
         if (args.length!=1) {
             System.err.println("Required file in not found");
@@ -138,13 +119,11 @@ public class CRMSRunner {
                 threads.add(new Thread(studentService, "Student Service - " + student.getName()));
 
                 modelsObjectList.clear();
-                //Add the data to model and the model to Student!! *****************
             }
 
             // Create gpu objects
             JsonObject gpus = gson.fromJson(reader, JsonObject.class);
             JsonArray gpusList = gson.fromJson(jsonObject.get("GPUS"), JsonArray.class);
-            //List<GPU> gpusObjList = new LinkedList<GPU>();
             int counter = 0;
             for (JsonElement gpuElement: gpusList){
                 GPU gpu = new GPU(stringToGPUType(gpuElement.getAsString()));
@@ -171,21 +150,18 @@ public class CRMSRunner {
                 counter++;
             }
 
-            //Need to add TickTime and Duration *****************************
             int tick = jsonObject.get("TickTime").getAsInt();
             int duration = jsonObject.get("Duration").getAsInt();
             TimeService timeService = new TimeService("Time Service", tick,duration);
             timeService.registration();
             timeServiceThread = new Thread(timeService, "Time Service");
-            //threads.add(timeService);
 
             // Create conference objects
             JsonObject conferences = gson.fromJson(reader, JsonObject.class);
             JsonArray conferencesList = gson.fromJson(jsonObject.get("Conferences"), JsonArray.class);
-            //List<ConfrenceInformation> conferencesObjList = new LinkedList<ConfrenceInformation>();
             for (JsonElement conferenceElement: conferencesList){
                 JsonObject conferenceJsonObj = conferenceElement.getAsJsonObject();
-                ConfrenceInformation confrenceInformation = new ConfrenceInformation(    //update the constructor  ********
+                ConfrenceInformation confrenceInformation = new ConfrenceInformation(
                         conferenceJsonObj.get("name").getAsString(),
                         conferenceJsonObj.get("date").getAsInt());
 
@@ -228,77 +204,64 @@ public class CRMSRunner {
 
         // *************** Output *****************
 
-        JSONObject output = new JSONObject();
-        JSONArray studentsOutput = new JSONArray();
+        JsonObject output = new JsonObject();
+        JsonArray studentsOutput = new JsonArray();
         for (Student s: studentsObjectsList) {
-            JSONObject temp = new JSONObject();
-            temp.put("name", s.getName());
-            temp.put("department" , s.getDepartment());
+            JsonObject temp = new JsonObject();
+            temp.addProperty("name", s.getName());
+            temp.addProperty("department" , s.getDepartment());
             if (s.getStatus()==Student.Degree.MSc)
-                temp.put("status", "MSc");
+                temp.addProperty("status", "MSc");
             else
-                temp.put("status", "PhD");
-            temp.put("publications", s.getPublications());
-            temp.put("papersRead", s.getPapersRead());
+                temp.addProperty("status", "PhD");
+            temp.addProperty("publications", s.getPublications());
+            temp.addProperty("papersRead", s.getPapersRead());
 
-            JSONArray trainedModels = new JSONArray();
+            JsonArray trainedModels = new JsonArray();
             for (Model m: s.getStudentModels()) {
-                JSONObject modeltmp = new JSONObject();
+                JsonObject modeltmp = new JsonObject();
                 if(m.getStatus()!=Model.Status.PreTrained && m.getStatus()!=Model.Status.Training){
-                    modeltmp.put("name", m.getName());
-                    JSONObject datatmp = new JSONObject();
-                    datatmp.put("type", typeToString(m.getData().getType()));
-                    datatmp.put("size", m.getData().getSize());
-                    modeltmp.put("data", datatmp);
+                    modeltmp.addProperty("name", m.getName());
+                    JsonObject datatmp = new JsonObject();
+                    datatmp.addProperty("type", typeToString(m.getData().getType()));
+                    datatmp.addProperty("size", m.getData().getSize());
+                    modeltmp.add("data", datatmp);
                     if (m.getResult()!=Model.Result.None) {
-                        modeltmp.put("status", "Tested");
+                        modeltmp.addProperty("status", "Tested");
                     }
                     else {
-                        modeltmp.put("status", "Trained");
+                        modeltmp.addProperty("status", "Trained");
                     }
-                    modeltmp.put("results", resultToString(m.getResult()));
-//                    if(m.getStatus()==Model.Status.Trained) {
-//                        modeltmp.put("status", "Trained");
-//                    }
-//                    else if (m.getStatus()==Model.Status.Tested) {
-//                        modeltmp.put("status", "Tested");
-//                    }
-//                    modeltmp.put("results", resultToString(m.getResult()));
+                    modeltmp.addProperty("results", resultToString(m.getResult()));
                     trainedModels.add(modeltmp);
                 }
             }
-            temp.put("trainedModels", trainedModels);
+            temp.add("trainedModels", trainedModels);
             studentsOutput.add(temp);
         }
-        output.put("students", studentsOutput);
+        output.add("students", studentsOutput);
 
-        JSONArray confsOutput = new JSONArray();
+        JsonArray confsOutput = new JsonArray();
         for (ConfrenceInformation c: conferencesObjList) {
-            JSONObject temp = new JSONObject();
-            temp.put("name", c.getName());
-            temp.put("date" , c.getDate());
-            JSONArray publications = new JSONArray();
+            JsonObject temp = new JsonObject();
+            temp.addProperty("name", c.getName());
+            temp.addProperty("date" , c.getDate());
+            JsonArray publications = new JsonArray();
             for (Model m: c.getModels()) {
-                JSONObject modeltmp = new JSONObject();
-                modeltmp.put("name", m.getName());
-                JSONObject datatmp = new JSONObject();
-                datatmp.put("type", typeToString(m.getData().getType()));
-                datatmp.put("size", m.getData().getSize());
-                modeltmp.put("data", datatmp);
-                modeltmp.put("status", "Tested");
-                modeltmp.put("results", resultToString(m.getResult()));
+                JsonObject modeltmp = new JsonObject();
+                modeltmp.addProperty("name", m.getName());
+                JsonObject datatmp = new JsonObject();
+                datatmp.addProperty("type", typeToString(m.getData().getType()));
+                datatmp.addProperty("size", m.getData().getSize());
+                modeltmp.add("data", datatmp);
+                modeltmp.addProperty("status", "Tested");
+                modeltmp.addProperty("results", resultToString(m.getResult()));
                 publications.add(modeltmp);
             }
-            temp.put("publications", publications);
+            temp.add("publications", publications);
             confsOutput.add(temp);
         }
-        output.put("conferences", confsOutput);
-
-//        Cluster cluster = Cluster.getInstance();
-//
-//        int cpusTotalUsageTIme = cluster.getCPUTimeUnits();
-//        int gpusTotalUsageTIme = cluster.getGPUTimeUnits();
-//        int totalDBProcessed = cluster.getTotalDBProcessed();
+        output.add("conferences", confsOutput);
 
         int cpusTotalUsageTIme = 0;
         int gpusTotalUsageTIme = 0;
@@ -312,14 +275,14 @@ public class CRMSRunner {
             totalDBProcessed += c.getTotalDBProcessed();
         }
 
-        output.put("cpuTimeUsed", cpusTotalUsageTIme);
-        output.put("gpuTimeUsed", gpusTotalUsageTIme);
-        output.put("batchesProcessed" , totalDBProcessed);
+        output.addProperty("cpuTimeUsed", cpusTotalUsageTIme);
+        output.addProperty("gpuTimeUsed", gpusTotalUsageTIme);
+        output.addProperty("batchesProcessed" , totalDBProcessed);
 
         FileWriter outputFile = null;
         try {
             outputFile = new FileWriter("output_file.json");
-            outputFile.write(output.toJSONString());
+            outputFile.write(output.toString());
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -332,4 +295,3 @@ public class CRMSRunner {
         }
     }
 }
-
