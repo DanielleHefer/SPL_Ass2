@@ -59,54 +59,89 @@ public class CPU {
 
     /**
      * @PRE:
-     * 	 	none
+     *        none
      * @POST:
-     * 	 	none
+     *        none
      * (basic query)
      */
     public int getCores() { return cores;}
 
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
+    public int getDataTypeNeededTicks(){return dataTypeNeededTicks;}
 
     /**
      * @PRE:
-     * 	 	none
+     *        none
      * @POST:
-     * 	 	none
+     *        none
      * (basic query)
      */
     public DataBatch getCurrDataBatch() {return currDataBatch;}
 
     /**
      * @PRE:
-     * 	 	none
+     *        none
      * @POST:
-     * 	 	none
+     *        none
      * (basic query)
      */
     public int getCurrTick() {return currTick;}
 
     /**
      * @PRE:
-     * 	 	none
+     *        none
      * @POST:
-     * 	 	none
+     *        none
      * (basic query)
      */
     public int getStartTick() {return startTick;}
 
-
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
     public int getProcessTick() {
         return processTick;
     }
 
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
     public BlockingQueue<DataBatch> getInnerQueue(){
         return innerQueue;
     }
 
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
     public int getCPUTimeUnits () {
         return CPUTimeUnits;
     }
 
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
     public int getTotalDBProcessed(){
         return totalDBProcessed;
     }
@@ -117,46 +152,42 @@ public class CPU {
      * @POST:
      *      innerQueue.size()==@PRE(innerQueue.size())+1
      */
-
     public void pushToInnerQueue(DataBatch db) {
         innerQueue.add(db);
         updateLoadFactor((32/cores)*db.getTicksForType());
     }
 
+    /**
+     * @PRE:
+     *        none
+     * @POST:
+     *        none
+     * (basic query)
+     */
     public int getLoadFactor() {
         return loadFactor.get();
-    }
-
-    public void updateLoadFactor(int lf) {
-        loadFactor.addAndGet(lf);
-    }
-
-    public void setCurrTick (Integer tick) {
-        this.currTick=tick;
     }
 
     /**
      * @PRE:
      *      none
      * @POST:
-     *     currTick = @PRE(currTick) + 1
-     *     if (@PRE(currDataBatch) != null && (@PRE(currTick)-startTick > (32/cores)*dataTypeNeededTicks)) :
-     *         if(@PRE(data.size())==0) :
-     *              currDataBatch==null
-     *              dataTypeNeededTicks==-1
-     *              startTick==-1
-     *         else :
-     *              currDataBatch!=null
-     *              dataTypeNeededTicks!=-1
-     *              startTick!=-1
-     *      else if: (@PRE(currDataBatch) == null && @PRE(data.size())>0) :
-     *              currDataBatch!=null
-     *              dataTypeNeededTicks!=-1
-     *              startTick!=-1
+     *      cpu.getLoadFactor()=@PRE(cpu.getLoadFactor())+lf
      */
-    public void updateTick() {
-
+    public void updateLoadFactor(int lf) {
+        loadFactor.addAndGet(lf);
     }
+
+    /**
+     * @PRE:
+     *      none
+     * @POST:
+     *      cpu.getCurrTick()=tick
+     */
+    public void setCurrTick (Integer tick) {
+        this.currTick=tick;
+    }
+
 
     /**
      * @PRE:
@@ -174,6 +205,7 @@ public class CPU {
         processTick = (32/cores)*dataTypeNeededTicks;
     }
 
+
     /**
      * @PRE:
      *      currDataBatch!=null
@@ -188,6 +220,16 @@ public class CPU {
      *      startTick==-1
      *      processTick==-1;
      */
+    public void completeBatchT() {
+        totalDBProcessed++;
+        CPUTimeUnits+=processTick;
+        currDataBatch.setProcessedByCPU();
+        currDataBatch.setTimeToProcessByCPU(processTick);
+        updateLoadFactor(-processTick);
+        resetAfterBatch();
+    }
+
+    //Same as completeBatchT(), here there is another function that can't be reached from the tests (cluster.addBatchToVRAM(currDataBatch))
     public void completeBatch() {
         totalDBProcessed++;
         CPUTimeUnits+=processTick;
@@ -198,6 +240,7 @@ public class CPU {
         resetAfterBatch();
     }
 
+    //Tested as part of completeBatch()
     public void resetAfterBatch(){
         startTick=-1;
         currDataBatch=null;

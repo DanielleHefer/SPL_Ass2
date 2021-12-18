@@ -122,6 +122,13 @@ public class GPU {
         return VRAMLimitation;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	none
+     * (basic query)
+     */
     public Type getType() {
         return type;
     }
@@ -135,6 +142,13 @@ public class GPU {
      */
     public int getCurrTick() { return currTick;}
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	getCurrTick()=currTime
+     *
+     */
     public void setCurrTick(int currTime) {
         currTick=currTime;
     }
@@ -148,6 +162,12 @@ public class GPU {
      */
     public int getStartTick() { return startTick;}
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	startTick=tick
+     */
     public void setStartTick(int tick) {
         startTick=tick;
     }
@@ -161,6 +181,12 @@ public class GPU {
      */
     public int getBatchesAmountToProcess() { return batchesAmountToProcess;}
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	getBatchesAmountToProcess()=@pre(getBatchesAmountToProcess())-1
+     */
     public void decreaseBatchesAmountToProcess() {
         batchesAmountToProcess--;
     }
@@ -194,46 +220,117 @@ public class GPU {
         return dataBatches;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	none
+     * (basic query)
+     */
     public LinkedList<TestModelEvent> getInnerTestQueue () {
         return innerTestQueue;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	none
+     * (basic query)
+     */
     public PriorityQueue<TrainModelEvent> getInnerTrainQueue () {
         return innerTrainQueue;
     }
 
+    /**
+     * @PRE:
+     * 	 	innerTestQueue.size()>0
+     * @POST:
+     * 	 	innerTestQueue.size()=@pre(innerTestQueue.size())-1
+     */
     public TestModelEvent popInnerTestQueue() {
         return innerTestQueue.poll();
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	innerTestQueue.size()=@pre(innerTestQueue.size())+1
+     */
     public void pushInnerTestQueue(TestModelEvent m) {
         innerTestQueue.offer(m);
     }
 
+    /**
+     * @PRE:
+     * 	 	innerTrainQueue.size()>0
+     * @POST:
+     * 	 	innerTrainQueue.size()=@pre(innerTrainQueue.size())-1
+     */
     public TrainModelEvent popInnerTrainQueue() {
         return innerTrainQueue.poll();
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	innerTrainQueue.size()=@pre(innerTrainQueue.size())+1
+     */
     public void pushInnerTrainQueue(TrainModelEvent m) {
         innerTrainQueue.offer(m);
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	none
+     * (basic query)
+     */
     public DataBatch getCurrDataBatch() {
         return currDataBatch;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	currDataBatch=db
+     */
     public void setCurrDataBatch (DataBatch db) {
         currDataBatch=db;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	none
+     * (basic query)
+     */
     public LinkedBlockingQueue<DataBatch> getVRAM() {
         return VRAM;
     }
 
+    /**
+     * @PRE:
+     * 	 	none
+     * @POST:
+     * 	 	currTick=tick
+     */
     public void setCurrTick (Integer tick) {
         this.currTick=tick;
     }
 
+    /**
+     * @PRE:
+     * 	    currVRAMSize>0
+     * @POST:
+     * 	 	startTick==currTick
+     * 	 	currVRAMSize==@pre(currVRAMSize)-1
+     */
     public void pollFromVRAM() throws InterruptedException {
         currDataBatch =  VRAM.take();
         startTick=currTick;
@@ -243,24 +340,43 @@ public class GPU {
         }
     }
 
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    currVRAMSize==@pre(currVRAMSize)+1
+     */
     public void pushToVRAM(DataBatch db) {
         VRAM.offer(db);
         currVRAMSize++;
     }
 
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    none
+     * 	    (basic query)
+     */
     public TrainModelEvent getCurrTrainEvent() {
         return currTrainEvent;
     }
 
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    currTrainEvent==e
+     */
     public void setCurrTrainEvent (TrainModelEvent e) {
         currTrainEvent = e;
     }
 
     /**
      * @PRE:
-     *      model==null
+     *      this.model==null
      * @POST:
-     *      model!=null
+     *      this.model==model
      */
     public void setModel(Model model) {
         this.model=model;
@@ -268,7 +384,13 @@ public class GPU {
             batchesAmountToProcess = this.model.getData().getSize()/1000;
     }
 
-
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    none
+     * 	    (basic query)
+     */
     public boolean isGPUAvailable() {
         return model==null;
     }
@@ -277,10 +399,8 @@ public class GPU {
     /**
      * @PRE:
      *      dataBatches.size()==0
-     *      batchesAmountToProcess==0
      * @POST:
      *      dataBatches.size()==(model.getData().getSize())/1000
-     *      batchesAmountToProcess == (model.getData().getSize())/1000
      */
     //takes the model.data.getSize(), split by 1000 and create this amount of batches,
     //each batch get the start_index (0,1000,2000,...) and pushed to Collection<DataBatch>
@@ -305,44 +425,17 @@ public class GPU {
         cluster.sendUnprocessedBatch(db);
     }
 
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    none
+     * 	    (basic query)
+     */
     public Cluster getCluster() {
         return cluster;
     }
 
-    /**
-     * @PRE:
-     *      batchesAmountToProcess > 0
-     *      currVRAMSize < VRAMLimitation
-     *
-     * @POST:
-     *      currVRAMSize = @PRE(currVRAMSize)+1
-     */
-    //increase to currVRAMSize by 1 for each added batch, here we throw away the batches
-    //take batch from cluster only if currVRAMSize < VRAMLimitation
-    //For Testing ******* and maybe our use
-    public void getProcessedBatchFromCluster() {}
-
-    /**
-     * @PRE:
-     *      none
-     * @POST:
-     *      if (@PRE(currVRAMSize)!=0 && currTick = startTick + processTick) :
-     *              currVRAMSize = @PRE(currVRAMSize)-1 &&
-     *              batchesAmountToProcess == @PRE(batchesAmountToProcess) - 1
-     *      currTick = @PRE(currTick) + 1
-     */
-    //For Testing *******
-    public void updateTick() {
-        /*
-        currTick++
-        if(currVRAMSize > 0){
-           if(currTick-start_tick > processTick){
-             currVRAMSize--
-             batchesAmountToProcess--
-            }
-         }
-         */
-    }
 
     /**
      * @PRE:
@@ -380,14 +473,21 @@ public class GPU {
 
     /**
      * @PRE:
-     *      none
+     *      model!=null
      * @POST:
-     *      model==null
      *      currVRAMSize==0
      *      dataBatches.size()==0
      *      batchesAmountToProcess==0
      *      startTick==-1
+     *      currDataBatch==null
      */
+    public void completeModel() {
+        model.setStatus(Model.Status.Trained);
+        cluster.addModelName(model.getName());
+        resetGPU();
+    }
+
+    //Tested as part of complete model
     public void resetGPU() {
         currVRAMSize=0;
         dataBatches.clear();
@@ -397,12 +497,17 @@ public class GPU {
         currDataBatch=null;
     }
 
-    public void completeModel() {
-        model.setStatus(Model.Status.Trained);
-        cluster.addModelName(model.getName());
-        resetGPU();
-    }
-
+    /**
+     * @PRE:
+     *      currDataBatch!=null
+     * @POST:
+     *      currVRAMSize==0
+     *      dataBatches.size()==0
+     *      batchesAmountToProcess==@pre(batchesAmountToProcess)-1
+     *      startTick==-1
+     *      currDataBatch==null
+     *      GPUTimeUnits==@pre(GPUTimeUnits)+processTick
+     */
     public void completeDataBatch(){
         currDataBatch=null;
         startTick=-1;
@@ -411,6 +516,13 @@ public class GPU {
         GPUTimeUnits+=processTick;
     }
 
+    /**
+     * @PRE:
+     * 	    none
+     * @POST:
+     * 	    none
+     * 	    (basic query)
+     */
     public int getGPUTimeUnits(){
         return GPUTimeUnits;
     }
