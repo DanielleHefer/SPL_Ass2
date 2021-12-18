@@ -31,7 +31,7 @@ public class CRMSRunner {
     }
 
     public static Data.Type stringToDataType(String str){
-        if(str.compareTo("images")==0)
+        if(str.compareTo("Images")==0)
             return Data.Type.Images;
         else if (str.compareTo("Text")==0)
             return Data.Type.Text;

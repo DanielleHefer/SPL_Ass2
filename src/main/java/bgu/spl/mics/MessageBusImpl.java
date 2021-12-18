@@ -1,5 +1,7 @@
 package bgu.spl.mics;
 
+import bgu.spl.mics.application.messages.TrainModelEvent;
+
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,9 +110,6 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 
-		//%%%%%%%%%%%%%%%%%%5
-		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - sendEvent");    //%%%%%%%%%%%%%%%%%%%%%
-
 		MicroService microservice = findNextMicroservice(e);
 		if (microservice!=null) {
 			Future<T> future = new Future<>();
@@ -118,9 +117,11 @@ public class MessageBusImpl implements MessageBus {
 			synchronized (queues.get(microservice)) {
 				queues.get(microservice).offer(e);
 
-				//%%%%%%%%%%%%%%%%%%%%%%%
-				System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+
-						" - put in queue of microservice "+microservice.getName());    //%%%%%%%%%%%%%%%%%%%%%
+				if (e.getClass()==TrainModelEvent.class) {
+					//%%%%%%%%%%%%%%%%%%%%%%%
+					System.out.println("Thread " + Thread.currentThread().getId() + " " + Thread.currentThread().getName() +
+							" - put in queue of microservice " + microservice.getName() + " Model: " + ((TrainModelEvent) e).getModel().getName());    //%%%%%%%%%%%%%%%%%%%%%
+				}
 				queues.get(microservice).notifyAll();
 			}
 			return future;
@@ -159,7 +160,7 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - awaitMessage");    //%%%%%%%%%%%%%%%%%%%%%
+		//System.out.println("Thread "+Thread.currentThread().getId()+" "+Thread.currentThread().getName()+" - awaitMessage");    //%%%%%%%%%%%%%%%%%%%%%
 		synchronized (queues.get(m)) {
 			while(queues.get(m).isEmpty()){
 				try {

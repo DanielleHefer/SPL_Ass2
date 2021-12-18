@@ -57,7 +57,7 @@ public class Cluster {
 		int minLF = Integer.MAX_VALUE;
 		CPU minCPU = null;
 		for (CPU cpu : CPUs) {
-			int currLF = cpu.getLoadFactor()+(32/cpu.getCores())*db.getTicksForType();
+			int currLF = cpu.getLoadFactor()+((32/cpu.getCores())*db.getTicksForType());
 			if(currLF<minLF){
 				minLF = currLF;
 				minCPU = cpu;

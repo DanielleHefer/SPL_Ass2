@@ -106,7 +106,7 @@ public class StudentService extends MicroService {
 
     @Override
     protected void initialize() {
-        messageBus.register(this);
+//        messageBus.register(this);
 //
 //        super.subscribeBroadcast(TickBroadcast.class, tick-> {
 //            if(tick.getCurrTick()==null) {
