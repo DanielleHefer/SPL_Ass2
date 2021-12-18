@@ -80,9 +80,7 @@ public class MessageBusImpl implements MessageBus {
 		if (list != null) {
 			for (MicroService microService : list) {
 				synchronized (queues.get(microService)) {
-					if (queues.get(microService) != null) {
-						queues.get(microService).offer(b);
-					}
+					queues.get(microService).offer(b);
 					queues.get(microService).notifyAll();
 				}
 			}
@@ -181,12 +179,22 @@ public class MessageBusImpl implements MessageBus {
 
 	//WE ADDED *****
 	public <T> boolean isSubscribedToEvent(Class<? extends Event<T>> type, MicroService m){
-		return subscribers.get(type).contains(m);
+		if (subscribers.get(type)!=null) {
+			if(subscribers.get(type).contains(m)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	//WE ADDED *****
 	public boolean isSubscribedToBroadcast(Class<? extends Broadcast> type, MicroService m){
-		return subscribers.get(type).contains(m);
+		if (subscribers.get(type)!=null) {
+			if(subscribers.get(type).contains(m)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	//WE ADDED *****

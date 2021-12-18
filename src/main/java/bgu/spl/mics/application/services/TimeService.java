@@ -49,5 +49,4 @@ public class TimeService extends MicroService{
 		sendBroadcast(new TickBroadcast(null));
 		terminate();
 	}
-//IMPLEMENT tick.getCurrTick() AND THAN UN-BACKSLASH IN GPUSERVICE + CPUSERVICE
 }

@@ -6,15 +6,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Hashtable;
+
 import static org.junit.Assert.*;
 
 public class MessageBusImplTest {
 
     private MessageBusImpl messageBus;
-    ExampleEvent event = new ExampleEvent("senderName");
-    ExampleBroadcast broad = new ExampleBroadcast("10");
-    MicroService ms1;
-    MicroService ms2;
+    private MicroService ms1;
+    private MicroService ms2;
+    private ExampleEvent event;
+    private ExampleBroadcast broad;
+
 
     @Before
     public void setUp() throws Exception {
@@ -22,15 +25,20 @@ public class MessageBusImplTest {
         ms1 = new MicroService("Bob") {
             @Override
             protected void initialize() {
-                messageBus.register(this);
+                messageBus.register(ms1);
             }
         };
-        ms2= new MicroService("Alice") {
+        ms1.initialize();
+        ms2 = new MicroService("Alice") {
             @Override
             protected void initialize() {
-                messageBus.register(this);
+                messageBus.register(ms2);
             }
         };
+        ms2.initialize();
+
+        event = new ExampleEvent("senderName");
+        broad = new ExampleBroadcast("10");
     }
 
     @Test
@@ -60,14 +68,13 @@ public class MessageBusImplTest {
 
     @Test
     public void sendBroadcast() {
-        //This test also checks the subscribeBroadcast method
         messageBus.subscribeBroadcast(broad.getClass(), ms2);
         ms1.sendBroadcast(broad);
-        try{
+        try {
             Message broad2 = messageBus.awaitMessage(ms2);
-            assertTrue(((ExampleBroadcast)broad2).getSenderId().equals(broad.getSenderId()));
+            assertTrue(((ExampleBroadcast) broad2).getSenderId().equals(broad.getSenderId()));
+        } catch (InterruptedException e) {
         }
-        catch (InterruptedException k){};
     }
 
     @Test
@@ -75,12 +82,14 @@ public class MessageBusImplTest {
         //This test also checks the subscribeEvent method
         assertNull(ms1.sendEvent(event));  //make sure it asserts null because no microservice has subscribed
         messageBus.subscribeEvent(event.getClass(), ms2);
-        ms1.sendEvent(event);
+        Future future = ms1.sendEvent(event);
         try{
             Message event2 = messageBus.awaitMessage(ms2);
             assertTrue(((ExampleEvent)event2).getSenderName().equals(event.getSenderName()));
         }
-        catch (InterruptedException k){};
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -100,17 +109,6 @@ public class MessageBusImplTest {
 
     @Test
     public void awaitMessage() {
-        // Check the scenario in which the microservice isn't registered to the message bus
-        messageBus.unregister(ms2);
-        try {
-            messageBus.awaitMessage(ms2);
-            fail("Exception Expected!");
-        }
-        catch (IllegalStateException e){
-            assertTrue(true);
-        } catch (InterruptedException e) {}
-
-        // Check the scenario in which the microservice got the message
         messageBus.register(ms2);
         messageBus.subscribeEvent(event.getClass(),ms2);
         ms1.sendEvent(event);
