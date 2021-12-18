@@ -27,7 +27,6 @@ public class CPU {
     private int cores;
     //we trust the cluster to push new DataBatches into this collection,
     // there is no function to check a queue in cluster!! this is the cpu queue! (gpu will have a queue in cluster)
-    private Collection<DataBatch> data; //For Testing *****
     private Cluster cluster;
 
     private int currTick; //For Testing*****
@@ -46,7 +45,6 @@ public class CPU {
     public CPU (int cores) {
         this.cores=cores;
         innerQueue = new LinkedBlockingQueue<>();
-        data = innerQueue;
         cluster = Cluster.getInstance();
         currTick=-1;
         startTick=-1;
@@ -68,14 +66,6 @@ public class CPU {
      */
     public int getCores() { return cores;}
 
-    /**
-     * @PRE:
-     * 	 	none
-     * @POST:
-     * 	 	none
-     * (basic query)
-     */
-    public Collection<DataBatch> getData () { return data;}
 
     /**
      * @PRE:
@@ -104,14 +94,6 @@ public class CPU {
      */
     public int getStartTick() {return startTick;}
 
-    /**
-     * @PRE:
-     * 	 	none
-     * @POST:
-     * 	 	none
-     * (basic query)
-     */
-    public int getDataTypeNeededTicks() {return dataTypeNeededTicks;}
 
     public int getProcessTick() {
         return processTick;
@@ -129,83 +111,28 @@ public class CPU {
         return totalDBProcessed;
     }
 
+    /**
+     * @PRE:
+     *      none
+     * @POST:
+     *      innerQueue.size()==@PRE(innerQueue.size())+1
+     */
+
     public void pushToInnerQueue(DataBatch db) {
         innerQueue.add(db);
         updateLoadFactor((32/cores)*db.getTicksForType());
     }
 
-    public void takeNextBatchFromInnerQueue() {
-        currDataBatch = innerQueue.poll();
-    }
-
-    /**
-     * @PRE:
-     *      none
-     * @POST:
-     *      data.size()==@PRE(data.size())+1
-     */
-    //Function for testing ****
-    public void addDataBatchToCollection (DataBatch batch){
-        //TODO - implement so the tests will work
-    }
-
     public int getLoadFactor() {
-//        synchronized (loadFactorLock) {
-//            return loadFactor;
-//        }
         return loadFactor.get();
     }
 
     public void updateLoadFactor(int lf) {
-//        synchronized (loadFactorLock) {
-//            loadFactor += lf;
-//        }
         loadFactor.addAndGet(lf);
     }
 
     public void setCurrTick (Integer tick) {
         this.currTick=tick;
-    }
-
-    /**
-     * @PRE:
-     *      none
-     * @POST:
-     *      data.size()==0
-     */
-    //Function for testing ****
-    public void clearDataCollection (){
-        //TODO - implement so the tests will work
-    }
-
-    /**
-     * @PRE:
-     *      currDataBatch!=null
-     *      dataTypeNeededTicks!=-1
-     *      startTick!=-1
-     * @POST:
-     *      currDataBatch==null
-     *      dataTypeNeededTicks==-1
-     *      startTick==-1
-     */
-    public void sendProcessedBatch() {
-        //cluster.returnToGPU(currDataBatch)
-        //currDataBatch=null
-        //dataTypeNeededTicks= -1
-        //startTick = -1
-    }
-
-    /**
-     * @PRE:
-     *      none
-     * @POST:
-     *      if (@PRE(data.size())>0) so: data.size()==@PRE(data.size())-1
-     */
-    public void takeNextBatchFromCollection() {
-        //will be called even if the collection's size == 0
-        //we will take batch only if the collection's size > 0
-        //this function will be called at updateTick()
-        takeBatchFromQueue();
     }
 
     /**
@@ -228,19 +155,18 @@ public class CPU {
      *              startTick!=-1
      */
     public void updateTick() {
-        /*
-        currTick++
-        if(currDataBatch != null){
-           if(currTick-startTick > (32/cores)*dataTypeNeededTicks) {
-             sendProcessedBatch()
-             takeNextBatchFromCollection()
-            }
-         }
-         else
-            takeNextBatchFromCollection()
-         */
+
     }
 
+    /**
+     * @PRE:
+     *      innerQueue.size())>0
+     *      dataTypeNeededTicks==-1
+     * @POST:
+     *      if (@PRE(innerQueue.size())>0) so: innerQueue.size()==@PRE(innerQueue.size())-1
+     *      startTick == currTick
+     *      dataTypeNeededTicks!=-1
+     */
     public void takeBatchFromQueue() {
         currDataBatch = innerQueue.poll();
         startTick = currTick;
@@ -248,6 +174,20 @@ public class CPU {
         processTick = (32/cores)*dataTypeNeededTicks;
     }
 
+    /**
+     * @PRE:
+     *      currDataBatch!=null
+     *      dataTypeNeededTicks!=-1
+     *      startTick!=-1
+     *      processTick!=-1;
+     * @POST:
+     *      totalDBProcessed=@pre(totalDBProcessed)+1
+     *      CPUTimeUnits=@pre(CPUTimeUnits)+processTick
+     *      currDataBatch==null
+     *      dataTypeNeededTicks==-1
+     *      startTick==-1
+     *      processTick==-1;
+     */
     public void completeBatch() {
         totalDBProcessed++;
         CPUTimeUnits+=processTick;
