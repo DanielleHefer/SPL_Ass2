@@ -45,7 +45,7 @@ public class CPUService extends MicroService {
                 //CPU is currently processing a batch
                 else {
                     //CPU is done processing the curr DataBatch
-                    if (cpu.getCurrTick()-cpu.getStartTick()==cpu.getProcessTick()){
+                    if (cpu.getCurrTick()-cpu.getStartTick()>=cpu.getProcessTick()){
                         cpu.completeBatch();
 
                         //%%%%%%%%%%%%%%%%%%%%%%%%%%

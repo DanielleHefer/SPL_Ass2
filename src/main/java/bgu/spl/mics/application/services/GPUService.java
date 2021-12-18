@@ -113,7 +113,7 @@ public class GPUService extends MicroService {
                     else {
 
                         //Check if the GPU is done processing the current data batch
-                        if (gpu.getCurrTick()-gpu.getStartTick()==gpu.getProcessTick()) {
+                        if (gpu.getCurrTick()-gpu.getStartTick()>=gpu.getProcessTick()) {
                             gpu.completeDataBatch();
 
                             //%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -3,6 +3,7 @@ package bgu.spl.mics.application.objects;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -36,7 +37,7 @@ public class CPU {
 
     private int processTick;
     private LinkedBlockingQueue<DataBatch> innerQueue;
-    private int loadFactor;
+    private AtomicInteger loadFactor;
     private Object loadFactorLock;
 
     private int totalDBProcessed;
@@ -52,7 +53,7 @@ public class CPU {
         currDataBatch=null;
         dataTypeNeededTicks=-1;
         processTick=-1;
-        loadFactor = (32/cores);//Maybe multiply by 2 in order to simulate the average OR calculate the real average OR neither
+        loadFactor = new AtomicInteger(0);//Maybe multiply by 2 in order to simulate the average OR calculate the real average OR neither
         loadFactorLock = new Object();
         totalDBProcessed=0;
         CPUTimeUnits=0;
@@ -149,15 +150,17 @@ public class CPU {
     }
 
     public int getLoadFactor() {
-        synchronized (loadFactorLock) {
-            return loadFactor;
-        }
+//        synchronized (loadFactorLock) {
+//            return loadFactor;
+//        }
+        return loadFactor.get();
     }
 
     public void updateLoadFactor(int lf) {
-        synchronized (loadFactorLock) {
-            loadFactor += lf;
-        }
+//        synchronized (loadFactorLock) {
+//            loadFactor += lf;
+//        }
+        loadFactor.addAndGet(lf);
     }
 
     public void setCurrTick (Integer tick) {
